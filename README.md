@@ -29,7 +29,7 @@ _Aquí puedes subir imágenes de la interfaz o diagramas si lo deseas._
 
 ## 📁 Estructura del proyecto 
 
-```bash
+
 BileraGela/
 │
 ├── Controllers/          # Lógica de control (C#)
@@ -45,7 +45,7 @@ BileraGela/
 
 
 1. Clona el repositorio:
-   ```bash
+   
    git clone https://github.com/xundi/BileraGela.git
 
 2. Abre la carpeta del proyecto en Visual Studio Code.
