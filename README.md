@@ -1,6 +1,7 @@
-# BileraGela - Aplicación para la gestión de Reserva de Salas
+# BileraGela - Aplicación web para la gestión de reservas de salas y recursos en entornos hospitalarios – ASP.NET Core MVC + MySQL
 
-**BileraGela - Aplicación para la gestión de Reserva de Salas** es una aplicación web desarrollada como Trabajo Fin de Grado (TFG) para la gestión de reservas de salas en el Hospital Universitario de Galdakao-Usansolo. 
+
+**BileraGela - Aplicación web para la gestión de reservas de salas y recursos en entornos hospitalarios** es una aplicación web desarrollada como Trabajo Fin de Grado (TFG) para la gestión de reservas de salas en el Hospital Universitario de Galdakao-Usansolo. 
 El sistema permite a usuarios del entorno hospitalario:
 - Reservar salas y recursos (como proyectores, equipos, coches etc.)
 - Aprobar o rechazar solicitudes especiales
