@@ -1,0 +1,35 @@
+﻿@{
+    ViewData["Title"] = "Inicio";
+}
+
+<!-- Estilo franja azul tipo Sarbide -->
+<style>
+    .barra-superior {
+        height: 20px;
+        background: linear-gradient(to right, #00416A, #0078A0);
+        margin-bottom: 30px;
+    }
+</style>
+
+<div class="barra-superior"></div>
+
+<div class="text-center mt-5">
+    <img src="@Url.Content("~/img/osakidetza.png")"
+         alt="Logo Osakidetza" style="max-height: 120px;" />
+
+    <h1 class="mt-4 display-5 fw-bold text-primary">
+        Gelen Erreserba / Reserva de Salas
+    </h1>
+
+    <div class="mt-4">
+        <a class="btn btn-primary btn-lg" asp-controller="Account" asp-action="Login">
+            Acceso usuarios
+        </a>
+    </div>
+
+    <div class="mt-3">
+        <a href="#">Euskara</a> |
+        <a href="#">Castellano</a> |
+        <a href="#">English</a>
+    </div>
+</div>

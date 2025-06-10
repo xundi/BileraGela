@@ -1,0 +1,55 @@
+﻿@model Reservas.Models.Resource
+@using Microsoft.AspNetCore.Mvc.Rendering
+
+@{
+    ViewData["Title"] = "Crear Recurso";
+}
+
+<h2>@ViewData["Title"]</h2>
+
+<form asp-controller="Resource" asp-action="Create" method="post">
+    @Html.AntiForgeryToken()
+
+    <div asp-validation-summary="All" class="text-danger"></div>
+
+    <div class="form-group">
+        <label asp-for="NameEuskera" class="control-label"></label>
+        <input asp-for="NameEuskera" class="form-control" />
+        <span asp-validation-for="NameEuskera" class="text-danger"></span>
+    </div>
+
+    <div class="form-group">
+        <label asp-for="NameSpanish" class="control-label"></label>
+        <input asp-for="NameSpanish" class="form-control" />
+        <span asp-validation-for="NameSpanish" class="text-danger"></span>
+    </div>
+
+    <div class="form-group">
+        <label asp-for="CenterId" class="control-label"></label>
+        <select asp-for="CenterId" class="form-control" asp-items="ViewBag.Centers">
+            <option value="">-- Selecciona un centro --</option>
+        </select>
+        <span asp-validation-for="CenterId" class="text-danger"></span>
+    </div>
+
+    <div class="form-group">
+        <label asp-for="ResourceTypeId" class="control-label"></label>
+        <select asp-for="ResourceTypeId" class="form-control" asp-items="ViewBag.ResourceTypes">
+            <option value="">-- Selecciona un tipo de recurso --</option>
+        </select>
+        <span asp-validation-for="ResourceTypeId" class="text-danger"></span>
+    </div>
+
+    <div class="mt-3">
+        <button type="submit" class="btn btn-primary">Guardar</button>
+        <a asp-action="Index" class="btn btn-secondary ms-2">Cancelar</a>
+    </div>
+</form>
+
+
+
+@section Scripts {
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+}

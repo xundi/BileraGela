@@ -1,0 +1,22 @@
+﻿@model Reservas.Models.UserType
+
+@{
+    ViewData["Title"] = "Detalles del Tipo de Usuario";
+}
+
+<h1 class="mb-4">@ViewData["Title"]</h1>
+
+<div>
+    <dl class="row">
+        <dt class="col-sm-3">ID</dt>
+        <dd class="col-sm-9">@Model.Id</dd>
+
+        <dt class="col-sm-3">Nombre</dt>
+        <dd class="col-sm-9">@Model.Name</dd>
+    </dl>
+</div>
+
+<div>
+    <a asp-action="Edit" asp-route-id="@Model.Id" class="btn btn-primary">Editar</a>
+    <a asp-action="Index" class="btn btn-secondary ms-2">Volver a la lista</a>
+</div>

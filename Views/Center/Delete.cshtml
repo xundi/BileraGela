@@ -1,0 +1,25 @@
+﻿@model Reservas.Models.Center
+
+@{
+    ViewData["Title"] = "Eliminar centro";
+}
+
+<h1 class="text-danger mb-4">¿Estás seguro de que deseas eliminar este centro?</h1>
+
+<div>
+    <h4 class="text-secondary">Centro</h4>
+    <hr />
+    <dl class="row">
+        <dt class="col-sm-3">Nombre en Euskera</dt>
+        <dd class="col-sm-9">@Html.DisplayFor(model => model.NameEuskera)</dd>
+
+        <dt class="col-sm-3">Nombre en Castellano</dt>
+        <dd class="col-sm-9">@Html.DisplayFor(model => model.NameSpanish)</dd>
+    </dl>
+
+    <form asp-action="Delete" method="post">
+        <input type="hidden" asp-for="Id" />
+        <button type="submit" class="btn btn-danger">Eliminar</button>
+        <a asp-action="Index" class="btn btn-secondary ms-2">Cancelar</a>
+    </form>
+</div>

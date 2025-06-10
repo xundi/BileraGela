@@ -1,0 +1,124 @@
+﻿@using Microsoft.AspNetCore.Http
+@using Reservas.Models
+
+@{
+    ViewData["Title"] = "Panel de usuario";
+    var tipoUsuario = Context.Session.GetInt32("UserTypeId") ?? 0;
+    var tipos = ViewBag.TiposRecurso as List<ResourceType>;
+    var ocultarBotonesInferiores = true;
+}
+
+@if (tipoUsuario != 1)
+{
+    <div class="alert alert-danger text-center mt-4">
+        No tienes permiso para acceder a esta página.
+    </div>
+}
+else
+{
+    <style>
+        .barra-superior {
+            height: 20px;
+            background: linear-gradient(to right, #00796B, #26A69A);
+            margin-bottom: 30px;
+        }
+
+        .btn-lg-custom {
+            padding: 20px;
+            font-size: 1.25rem;
+            width: 100%;
+        }
+
+        .panel-icon {
+            font-size: 2rem;
+            margin-right: 10px;
+        }
+    </style>
+
+    <div class="barra-superior"></div>
+
+    <div class="container mt-5">
+        <h1 class="text-center mb-4 text-primary">Panel de Usuario</h1>
+
+        <div class="row justify-content-center mb-4">
+            <div class="col-md-6">
+                <form asp-controller="Reservas" asp-action="Create" method="get">
+                    <div class="form-group">
+                        <label>Tipo de recurso</label>
+                        <select id="tipoRecurso" name="tipoId" class="form-control" required>
+                            <option value="">-- Selecciona tipo --</option>
+                            @if (tipos != null)
+                            {
+                                foreach (var tipo in tipos)
+                                {
+                                    <option value="@tipo.Id">@tipo.NameSpanish</option>
+
+                                }
+                            }
+                            else
+                            {
+                                <option disabled>❌ No hay tipos disponibles</option>
+                            }
+                        </select>
+                    </div>
+
+                    <div class="form-group mt-3">
+                        <label>Sala</label>
+                        <select id="sala" name="ResourceId" class="form-control" required>
+                            <option value="">-- Primero selecciona tipo de recurso --</option>
+                        </select>
+                    </div>
+
+                    <div class="text-center mt-3">
+                        <button type="submit" class="btn btn-info">Continuar con reserva</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        @if (!ocultarBotonesInferiores)
+
+        {
+            <div class="row row-cols-1 row-cols-md-2 g-4 justify-content-center">
+                <div class="col-md-4">
+                    <a class="btn btn-outline-success btn-lg-custom" asp-controller="Reservas" asp-action="Calendario">
+                        📅 Ver Calendario
+                    </a>
+                </div>
+                <div class="col-md-4">
+                    <a class="btn btn-outline-primary btn-lg-custom" asp-controller="Resource" asp-action="Index">
+                        🧰 Ver salas disponibles
+                    </a>
+                </div>
+                <div class="col-md-4">
+                    <a class="btn btn-outline-info btn-lg-custom" asp-controller="Reservas" asp-action="SeleccionarTipo">
+                        ➕ Hacer una reserva
+                    </a>
+                </div>
+                <div class="col-md-4">
+                    <a class="btn btn-outline-danger btn-lg-custom" asp-controller="Account" asp-action="Logout">
+                        🔓 Cerrar sesión
+                    </a>
+                </div>
+            </div>
+        }
+
+    </div>
+}
+
+<script>
+    document.getElementById('tipoRecurso').addEventListener('change', function () {
+        var tipoId = this.value;
+        var salaSelect = document.getElementById('sala');
+        salaSelect.innerHTML = '<option value="">Cargando salas...</option>';
+
+        fetch(`/Reservas/GetSalasPorTipo?tipoId=${tipoId}`)
+            .then(response => response.json())
+            .then(data => {
+                salaSelect.innerHTML = '<option value="">-- Selecciona sala --</option>';
+                data.forEach(sala => {
+                    salaSelect.innerHTML += `<option value="${sala.id}">${sala.nombre}</option>`;
+                });
+            });
+    });
+</script>

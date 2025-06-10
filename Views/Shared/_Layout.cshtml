@@ -1,0 +1,127 @@
+﻿@using Microsoft.AspNetCore.Http
+@{
+    var tipoUsuario = Context.Session.GetInt32("UserTypeId") ?? 0;
+    //var tipos = ViewBag.TiposRecurso as List<ResourceType>;
+    var ocultarBotones = Context.Request.Path.Value?.ToLower().Contains("/home/panel") == true;
+
+}
+
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] - Erreserbak</title>
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+    @* <link rel="stylesheet" href="~/WebApplication11.styles.css" asp-append-version="true" /> *@
+
+</head>
+<body>
+    <header>
+        <nav class="navbar navbar-expand-sm navbar-toggleable-sm navbar-light bg-white border-bottom box-shadow mb-3">
+            <div class="container-fluid">
+
+              
+
+                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target=".navbar-collapse"
+                        aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+                    <span class="navbar-toggler-icon"></span>
+                </button>
+
+                <div class="navbar-collapse collapse d-sm-inline-flex justify-content-between">
+                    @if (User.Identity.IsAuthenticated && tipoUsuario > 0)
+                    {
+                        <ul class="navbar-nav flex-grow-1">
+                            @* 👩‍💼 ADMINISTRADOR *@
+                            @if (tipoUsuario >= 3)
+                            {
+                                <li class="nav-item">
+                                    <a class="nav-link text-dark" asp-controller="User" asp-action="Index">Usuarios</a>
+                                </li>
+                                <li class="nav-item">
+                                    <a class="nav-link text-dark" asp-controller="UserType" asp-action="Index">Tipos de Usuario</a>
+                                </li>
+                                <li class="nav-item">
+                                    <a class="nav-link text-dark" asp-controller="Center" asp-action="Index">Centros</a>
+                                </li>
+                                <li class="nav-item">
+                                    <a class="nav-link text-dark" asp-controller="ResourceType" asp-action="Index">Tipos de recurso</a>
+                                </li>
+                                <li class="nav-item">
+                                    <a class="nav-link text-dark" asp-controller="Resource" asp-action="Index">Recursos</a>
+                                </li>
+                                <li class="nav-item">
+                                    <a class="nav-link text-dark" asp-controller="Reservas" asp-action="Calendario">Calendario</a>
+                                </li>
+                            }
+
+                            @* 👨‍🏫 DOCENTE *@
+                            else if (tipoUsuario == 2)
+                            {
+                                <li class="nav-item">
+                                    <a class="nav-link text-dark" asp-controller="Resource" asp-action="Index">Ver salas</a>
+                                </li>
+                                <li class="nav-item">
+                                    <a class="nav-link text-dark" asp-controller="Reservas" asp-action="Calendario">Calendario</a>
+                                </li>
+                            }
+
+                            @* 👤 USUARIO NORMAL *@
+                            else if (tipoUsuario == 1)
+                            {
+                                <li class="nav-item">
+                                    <a class="nav-link text-dark" asp-controller="Reservas" asp-action="Calendario">📅 Calendario</a>
+                                </li>
+                                <li class="nav-item">
+                                    <a class="nav-link text-dark" asp-controller="Resource" asp-action="Index">🧰 Ver salas</a>
+                                </li>
+                                <li class="nav-item">
+                                    <a class="nav-link text-dark" asp-controller="Reservas" asp-action="Create">➕ Hacer reserva</a>
+                                </li>
+                            }
+                        </ul>
+                    }
+
+
+                    <ul class="navbar-nav ms-auto">
+                        @if (User.Identity.IsAuthenticated)
+                        {
+                            <li class="nav-item">
+                                <span class="nav-link disabled text-muted">👤 @User.Identity.Name</span>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link text-dark" asp-controller="Account" asp-action="Logout">Cerrar sesión</a>
+                            </li>
+                        }
+                        else
+                        {
+                            <li class="nav-item">
+                                <a class="nav-link text-dark" asp-controller="Account" asp-action="Login">Iniciar sesión</a>
+                            </li>
+                        }
+                    </ul>
+
+                </div>
+            </div>
+        </nav>
+    </header>
+
+    <div class="container">
+        <main role="main" class="pb-3">
+            @RenderBody()
+        </main>
+    </div>
+
+    <footer class="border-top footer text-muted">
+        <div class="container">
+            &copy; 2025 - Erreserbak by Idoia Lertxundi
+        </div>
+    </footer>
+
+    <script src="~/lib/jquery/dist/jquery.min.js"></script>
+    <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="~/js/site.js" asp-append-version="true"></script>
+    @await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>

@@ -1,0 +1,36 @@
+﻿@model Reservas.Models.ResourceType
+
+@{
+    ViewData["Title"] = "Crear tipo de recurso";
+}
+
+<h2>Crear Tipo de Recurso</h2>
+
+<form asp-action="Create" asp-controller="ResourceType" method="post">
+    @Html.AntiForgeryToken()
+
+    <div class="form-group mb-3">
+        <label asp-for="NameEuskera" class="form-label">Nombre en Euskera</label>
+        <input asp-for="NameEuskera" class="form-control" />
+        <span asp-validation-for="NameEuskera" class="text-danger"></span>
+    </div>
+
+    <div class="form-group mb-3">
+        <label asp-for="NameSpanish" class="form-label">Nombre en Castellano</label>
+        <input asp-for="NameSpanish" class="form-control" />
+        <span asp-validation-for="NameSpanish" class="text-danger"></span>
+    </div>
+
+    <button type="submit" class="btn btn-primary">Guardar</button>
+    <a asp-action="Index" class="btn btn-secondary ms-2">Cancelar</a>
+</form>
+
+<div>
+    <a asp-action="Index" class="btn btn-secondary">Volver al listado</a>
+</div>
+
+@section Scripts {
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+}

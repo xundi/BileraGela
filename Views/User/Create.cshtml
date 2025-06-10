@@ -1,0 +1,40 @@
+﻿@model Reservas.Models.User
+
+@{
+    ViewData["Title"] = "Crear usuario";
+}
+
+<h1 class="mb-4">@ViewData["Title"]</h1>
+
+<div class="row">
+    <div class="col-md-6">
+        <form asp-action="Create">
+            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+
+            <div class="form-group mb-3">
+                <label asp-for="Dni" class="form-label"></label>
+                <input asp-for="Dni" class="form-control" />
+                <span asp-validation-for="Dni" class="text-danger"></span>
+            </div>
+
+            <div class="form-group mb-3">
+                <label asp-for="UserTypeId" class="form-label">Tipo de usuario</label>
+                <select asp-for="UserTypeId" class="form-select"
+                        asp-items="@(ViewData["UserTypeId"] as SelectList)">
+                    <option value="">-- Selecciona un rol --</option>
+                </select>
+                <span asp-validation-for="UserTypeId" class="text-danger"></span>
+            </div>
+
+            <div class="form-group">
+                <button type="submit" class="btn btn-primary">Crear</button>
+                <a asp-action="Index" class="btn btn-secondary ms-2">Cancelar</a>
+            </div>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    @Html.Partial("_ValidationScriptsPartial")
+
+}

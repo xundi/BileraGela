@@ -1,0 +1,43 @@
+﻿@model IEnumerable<Reservas.Models.Resource>
+
+@{
+    ViewData["Title"] = "Lista de Recursos";
+}
+
+<h2>@ViewData["Title"]</h2>
+
+<a asp-action="Create" class="btn btn-primary mb-3">+ Nuevo Recurso</a>
+
+<table class="table table-bordered table-striped">
+    <thead>
+        <tr>
+            <th>Nombre (ES)</th>
+            <th>Nombre (EU)</th>
+            <th>Centro</th>
+            <th>Tipo de Recurso</th>
+            <th>Acciones</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var item in Model)
+        {
+            <tr>
+                <td>@item.NameSpanish</td>
+                <td>@item.NameEuskera</td>
+                <td>@item.Center.NameSpanish</td>
+                <td>@item.ResourceType?.NameSpanish</td>
+                <td>
+                    <a asp-action="Edit" asp-route-id="@item.Id" class="btn btn-sm btn-warning">Editar</a>
+                    <a asp-action="Delete" asp-route-id="@item.Id" class="btn btn-sm btn-danger">Eliminar</a>
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>
+
+@if (TempData["Mensaje"] != null)
+{
+    <div class="alert alert-success mt-3">
+        @TempData["Mensaje"]
+    </div>
+}

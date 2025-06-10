@@ -1,0 +1,51 @@
+﻿@*
+    For more information on enabling MVC for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
+*@
+@{
+}
+@{
+    ViewData["Title"] = "Panel del Validador";
+}
+
+<style>
+    .barra-superior {
+        height: 20px;
+        background: linear-gradient(to right, #007E7A, #00A99D);
+        margin-bottom: 30px;
+    }
+
+    .btn-lg-custom {
+        padding: 20px;
+        font-size: 1.25rem;
+        width: 100%;
+    }
+
+    .panel-icon {
+        font-size: 2rem;
+        margin-right: 10px;
+    }
+</style>
+
+<div class="barra-superior"></div>
+
+<div class="container mt-5">
+    <h1 class="text-center mb-4 text-success">Panel del Validador</h1>
+
+    <div class="row row-cols-1 row-cols-md-2 g-4 justify-content-center">
+        <div class="col-md-5">
+            <a class="btn btn-outline-success btn-lg-custom" asp-controller="Reservas" asp-action="Calendario">
+                📅 Ver calendario
+            </a>
+        </div>
+        <div class="col-md-5">
+            <a class="btn btn-outline-primary btn-lg-custom" asp-controller="Reservas" asp-action="Validar">
+                ✅ Validar reservas
+            </a>
+        </div>
+        <div class="col-md-5">
+            <a class="btn btn-outline-danger btn-lg-custom" asp-controller="Account" asp-action="Logout">
+                🔓 Cerrar sesión
+            </a>
+        </div>
+    </div>
+</div>
