@@ -68,8 +68,14 @@ namespace Reservas.Controllers
         {
             if (id != resource.Id) return NotFound();
 
-            if (ModelState.IsValid)
-            {
+
+            Center miCentro = _context.Centers.Find(resource.CenterId);
+            ResourceType miResourceType = _context.ResourceTypes.Find(resource.ResourceTypeId);
+
+            resource.Center = miCentro;
+            resource.ResourceType = miResourceType;
+
+          
                 try
                 {
                     _context.Update(resource);
@@ -84,10 +90,9 @@ namespace Reservas.Controllers
                     else
                         throw;
                 }
-            }
+            
 
-            await CargarCombos(resource.CenterId, resource.ResourceTypeId);
-            return View(resource);
+
         }
 
         // GET: Resource/Delete/5
