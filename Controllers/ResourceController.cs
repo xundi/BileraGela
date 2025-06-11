@@ -11,7 +11,7 @@ namespace Reservas.Controllers
     public class ResourceController : Controller
     {
         private readonly BDContext _context;
-
+        //Prueba GIT
         public ResourceController(BDContext context)
         {
             _context = context;
@@ -41,16 +41,12 @@ namespace Reservas.Controllers
         {
            
 
-            if (ModelState.IsValid)
-            {
                 _context.Add(resource);
                 await _context.SaveChangesAsync();
                 TempData["Mensaje"] = "Recurso creado correctamente.";
                 return RedirectToAction(nameof(Index));
-            }
+           
 
-            await CargarCombos(resource.CenterId, resource.ResourceTypeId);
-            return View(resource);
         }
 
         // GET: Resource/Edit/5
