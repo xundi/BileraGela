@@ -9,6 +9,7 @@ using System.Security.Claims;
 
 namespace Reservas.Controllers
 {
+    // Cambio account controller
     public class AccountController : Controller
     {
         private readonly BDContext _context;
