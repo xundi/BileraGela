@@ -9,14 +9,22 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Compile Remove="Views\Reservas\NewFolder1\**" />
     <Compile Remove="Views\Reservas\NewFolder\**" />
+    <Content Remove="Views\Reservas\NewFolder1\**" />
     <Content Remove="Views\Reservas\NewFolder\**" />
+    <EmbeddedResource Remove="Views\Reservas\NewFolder1\**" />
     <EmbeddedResource Remove="Views\Reservas\NewFolder\**" />
+    <None Remove="Views\Reservas\NewFolder1\**" />
     <None Remove="Views\Reservas\NewFolder\**" />
   </ItemGroup>
 
   <ItemGroup>
     <Compile Remove="Controllers\ResourceTypeController - Copia.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Remove="Views\Reservas\MisReservas.proto" />
   </ItemGroup>
 
   <ItemGroup>

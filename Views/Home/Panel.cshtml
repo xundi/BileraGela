@@ -44,35 +44,35 @@ else
             <div class="col-md-6">
                 <form asp-controller="Reservas" asp-action="Create" method="get">
                     <div class="form-group">
-                        <label>Tipo de recurso</label>
-                        <select id="tipoRecurso" name="tipoId" class="form-control" required>
-                            <option value="">-- Selecciona tipo --</option>
-                            @if (tipos != null)
+                        <label>Centro</label>
+                        <select id="centro" name="centroId" class="form-control" required>
+                            <option value="">-- Selecciona centro --</option>
+                            @foreach (var centro in ViewBag.Centros as SelectList)
                             {
-                                foreach (var tipo in tipos)
-                                {
-                                    <option value="@tipo.Id">@tipo.NameSpanish</option>
-
-                                }
-                            }
-                            else
-                            {
-                                <option disabled>❌ No hay tipos disponibles</option>
+                                <option value="@centro.Value">@centro.Text</option>
                             }
                         </select>
                     </div>
 
                     <div class="form-group mt-3">
-                        <label>Sala</label>
-                        <select id="sala" name="ResourceId" class="form-control" required>
+                        <label>Tipo de recurso</label>
+                        <select id="tipoRecurso" name="tipoId" class="form-control" required>
+                            <option value="">-- Primero selecciona centro --</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group mt-3">
+                        <label>Recurso</label>
+                        <select id="recurso" name="recursoId" class="form-control" required>
                             <option value="">-- Primero selecciona tipo de recurso --</option>
                         </select>
                     </div>
 
-                    <div class="text-center mt-3">
+                    <div class="text-center mt-4">
                         <button type="submit" class="btn btn-info">Continuar con reserva</button>
                     </div>
                 </form>
+
             </div>
         </div>
 
@@ -96,6 +96,11 @@ else
                     </a>
                 </div>
                 <div class="col-md-4">
+                    <a class="btn btn-outline-secondary btn-lg-custom" asp-controller="Reservas" asp-action="MisReservas">
+                        📂 Mis Reservas
+                    </a>
+                </div>
+                <div class="col-md-4">
                     <a class="btn btn-outline-danger btn-lg-custom" asp-controller="Account" asp-action="Logout">
                         🔓 Cerrar sesión
                     </a>
@@ -106,19 +111,40 @@ else
     </div>
 }
 
-<script>
-    document.getElementById('tipoRecurso').addEventListener('change', function () {
-        var tipoId = this.value;
-        var salaSelect = document.getElementById('sala');
-        salaSelect.innerHTML = '<option value="">Cargando salas...</option>';
+@section Scripts {
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const centro = document.getElementById('centro');
+            const tipo = document.getElementById('tipoRecurso');
+            const recurso = document.getElementById('recurso');
 
-        fetch(`/Reservas/GetSalasPorTipo?tipoId=${tipoId}`)
-            .then(response => response.json())
-            .then(data => {
-                salaSelect.innerHTML = '<option value="">-- Selecciona sala --</option>';
-                data.forEach(sala => {
-                    salaSelect.innerHTML += `<option value="${sala.id}">${sala.nombre}</option>`;
-                });
+            centro.addEventListener('change', function () {
+                tipo.innerHTML = '<option>Cargando tipos...</option>';
+                recurso.innerHTML = '<option>Selecciona tipo primero</option>';
+
+                fetch(`/Home/GetTiposPorCentro?centroId=${this.value}`)
+                    .then(res => res.json())
+                    .then(data => {
+                        tipo.innerHTML = '<option value="">-- Selecciona tipo --</option>';
+                        data.forEach(t => {
+                            tipo.innerHTML += `<option value="${t.id}">${t.nombre}</option>`;
+                        });
+                    });
             });
-    });
-</script>
+
+            tipo.addEventListener('change', function () {
+                recurso.innerHTML = '<option>Cargando recursos...</option>';
+
+                fetch(`/Home/GetRecursosPorCentroYTipo?centroId=${centro.value}&tipoId=${this.value}`)
+                    .then(res => res.json())
+                    .then(data => {
+                        recurso.innerHTML = '<option value="">-- Selecciona recurso --</option>';
+                        data.forEach(r => {
+                            recurso.innerHTML += `<option value="${r.id}">${r.nombre}</option>`;
+                        });
+                    });
+            });
+        });
+    </script>
+}
+

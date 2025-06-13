@@ -39,13 +39,13 @@ namespace Reservas.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Create([Bind("Id, NameEuskera,NameSpanish,CenterId,ResourceTypeId")] Resource resource)
         {
-           
 
-                _context.Add(resource);
-                await _context.SaveChangesAsync();
-                TempData["Mensaje"] = "Recurso creado correctamente.";
-                return RedirectToAction(nameof(Index));
-           
+
+            _context.Add(resource);
+            await _context.SaveChangesAsync();
+            TempData["Mensaje"] = "Recurso creado correctamente.";
+            return RedirectToAction(nameof(Index));
+
 
         }
 
@@ -75,22 +75,22 @@ namespace Reservas.Controllers
             resource.Center = miCentro;
             resource.ResourceType = miResourceType;
 
-          
-                try
-                {
-                    _context.Update(resource);
-                    await _context.SaveChangesAsync();
-                    TempData["Mensaje"] = "Recurso actualizado correctamente.";
-                    return RedirectToAction(nameof(Index));
-                }
-                catch (DbUpdateConcurrencyException)
-                {
-                    if (!ResourceExists(resource.Id))
-                        return NotFound();
-                    else
-                        throw;
-                }
-            
+
+            try
+            {
+                _context.Update(resource);
+                await _context.SaveChangesAsync();
+                TempData["Mensaje"] = "Recurso actualizado correctamente.";
+                return RedirectToAction(nameof(Index));
+            }
+            catch (DbUpdateConcurrencyException)
+            {
+                if (!ResourceExists(resource.Id))
+                    return NotFound();
+                else
+                    throw;
+            }
+
 
 
         }

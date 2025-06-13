@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using Reservas.Context;
 using Reservas.Models;
+using System.Security.Claims;
 
 
 namespace Reservas.Controllers
@@ -112,6 +113,21 @@ namespace Reservas.Controllers
 
             ViewBag.TiposRecurso = new SelectList(tipos, "Id", "Nombre");
             return View(booking);
+        }
+        // GET: Reservas/MisReservas
+        [HttpGet]
+        public async Task<IActionResult> MisReservas()
+        {
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier) ?? "UsuarioEjemplo"; // Cambia si usas otro campo
+            var reservas = await _context.Bookings
+                .Include(b => b.Resource)
+                .ThenInclude(r => r.ResourceType)
+                .Include(b => b.Resource.Center)
+                .Where(b => b.Usuario == userId)
+                .OrderByDescending(b => b.FechaInicio)
+                .ToListAsync();
+
+            return View(reservas);
         }
 
         // AJAX: Obtener salas por tipo

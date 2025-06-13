@@ -1,12 +1,13 @@
 ﻿@model Reservas.Models.Booking
 
 @{
-    ViewData["Title"] = "Nueva Reserva";
+	ViewData["Title"] = "Nueva Reserva";
 }
 
 <h2 class="text-center mt-4 mb-4 text-primary">Nueva Reserva</h2>
 
 <form asp-action="Create" method="post">
+	@* Campo de tipo de recurso ya seleccionado previamente
     <div class="form-group mb-3">
         <label for="tipoRecurso">Tipo de recurso</label>
         <select id="tipoRecurso" class="form-control" asp-items="ViewBag.TiposRecurso">
@@ -14,6 +15,9 @@
         </select>
 
     </div>
+    *@
+
+	@* Campo de sala ya seleccionado previamente
 
     <div class="form-group mb-3">
         <label for="ResourceId">Sala</label>
@@ -21,35 +25,36 @@
             <option value="">-- Selecciona sala --</option>
         </select>
     </div>
+    *@
 
-    <div class="form-group mb-3">
-        <label asp-for="FechaInicio"></label>
-        <input asp-for="FechaInicio" type="datetime-local" class="form-control" />
-    </div>
+	<div class="form-group mb-3">
+		<label asp-for="FechaInicio"></label>
+		<input asp-for="FechaInicio" type="datetime-local" class="form-control" />
+	</div>
 
-    <div class="form-group mb-3">
-        <label asp-for="FechaFin"></label>
-        <input asp-for="FechaFin" type="datetime-local" class="form-control" />
-    </div>
+	<div class="form-group mb-3">
+		<label asp-for="FechaFin"></label>
+		<input asp-for="FechaFin" type="datetime-local" class="form-control" />
+	</div>
 
-    <button type="submit" class="btn btn-primary">Guardar Reserva</button>
+	<button type="submit" class="btn btn-primary">Guardar Reserva</button>
 </form>
 
 @section Scripts {
-    <script>
-        document.getElementById('tipoRecurso').addEventListener('change', function () {
-            var tipoId = this.value;
-            var salaSelect = document.getElementById('sala');
-            salaSelect.innerHTML = '<option value="">Cargando salas...</option>';
+	<script>
+		document.getElementById('tipoRecurso').addEventListener('change', function () {
+			var tipoId = this.value;
+			var salaSelect = document.getElementById('sala');
+			salaSelect.innerHTML = '<option value="">Cargando salas...</option>';
 
-            fetch(`/Reservas/GetSalasPorTipo?tipoId=${tipoId}`)
-                .then(response => response.json())
-                .then(data => {
-                    salaSelect.innerHTML = '<option value="">-- Selecciona sala --</option>';
-                    data.forEach(sala => {
-                        salaSelect.innerHTML += `<option value="${sala.id}">${sala.nombre}</option>`;
-                    });
-                });
-        });
-    </script>
+			fetch(`/Reservas/GetSalasPorTipo?tipoId=${tipoId}`)
+				.then(response => response.json())
+				.then(data => {
+					salaSelect.innerHTML = '<option value="">-- Selecciona sala --</option>';
+					data.forEach(sala => {
+						salaSelect.innerHTML += `<option value="${sala.id}">${sala.nombre}</option>`;
+					});
+				});
+		});
+	</script>
 }

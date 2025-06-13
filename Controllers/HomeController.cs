@@ -1,4 +1,5 @@
 ﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using Reservas.Context;
 
@@ -46,6 +47,30 @@ namespace Reservas.Controllers
 
             return View();
         }
+        [HttpGet]
+        public async Task<IActionResult> GetTiposPorCentro(int centroId)
+        {
+            var tipos = await _context.Resources
+                .Where(r => r.CenterId == centroId)
+                .Select(r => r.ResourceType)
+                .Distinct()
+                .Select(t => new { id = t.Id, nombre = t.NameSpanish })
+                .ToListAsync();
+
+            return Json(tipos);
+        }
+        [HttpGet]
+        public async Task<IActionResult> GetRecursosPorCentroYTipo(int centroId, int tipoId)
+        {
+            var recursos = await _context.Resources
+                .Where(r => r.CenterId == centroId && r.ResourceTypeId == tipoId)
+                .Select(r => new { id = r.Id, nombre = r.NameSpanish })
+                .ToListAsync();
+
+            return Json(recursos);
+        }
+
+
 
         /*public IActionResult Panel()
         {
@@ -63,13 +88,17 @@ namespace Reservas.Controllers
             if (tipoUsuario != 1)
                 return Unauthorized();
 
-            // PASO CLAVE: usamos un modelo fuerte
-            var tipos = await _context.ResourceTypes.ToListAsync();
+            // Carga centros
+            var centros = await _context.Centers
+                .Select(c => new { c.Id, c.NameSpanish })
+                .ToListAsync();
+            ViewBag.Centros = new SelectList(centros, "Id", "NameSpanish");
 
-            ViewBag.TiposRecurso = tipos;
-
+            // Ya no necesitas cargar todos los tipos globales aquí,
+            // se cargarán dinámicamente según el centro
             return View();
         }
+
 
 
 

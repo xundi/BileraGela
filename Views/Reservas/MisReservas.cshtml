@@ -1,0 +1,40 @@
+﻿@model IEnumerable<Reservas.Models.Booking>
+
+@{
+    ViewData["Title"] = "Mis Reservas";
+}
+
+<h2 class="mb-4">📂 Mis Reservas</h2>
+
+@if (!Model.Any())
+{
+    <div class="alert alert-info">Aún no tienes reservas.</div>
+}
+else
+{
+    <table class="table table-bordered table-striped">
+        <thead>
+            <tr>
+                <th>Recurso</th>
+                <th>Tipo</th>
+                <th>Centro</th>
+                <th>Inicio</th>
+                <th>Fin</th>
+                <th>Estado</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var r in Model)
+            {
+                <tr>
+                    <td>@r.Resource?.NameSpanish</td>
+                    <td>@r.Resource?.ResourceType?.NameSpanish</td>
+                    <td>@r.Resource?.Center?.NameSpanish</td>
+                    <td>@r.FechaInicio.ToString("g")</td>
+                    <td>@r.FechaFin.ToString("g")</td>
+                    <td>@r.Estado</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
