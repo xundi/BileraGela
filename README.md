@@ -1,4 +1,4 @@
-# BileraGela - Aplicación web para la gestión de reservas de salas y recursos en entornos hospitalarios – ASP.NET Core MVC + MySQL
+# ErreserbenKudeaketa - Sistema Web para la Gestión de Reservas en entornos hospitalarios – ASP.NET Core MVC + MySQL
 
 
 **BileraGela - Aplicación web para la gestión de reservas de salas y recursos en entornos hospitalarios** es una aplicación web desarrollada como Trabajo Fin de Grado (TFG) para la gestión de reservas de salas en el Hospital Universitario de Galdakao-Usansolo. 
