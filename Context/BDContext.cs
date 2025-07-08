@@ -22,9 +22,9 @@ namespace Reservas.Context
             base.OnModelCreating(modelBuilder);
 
             // Puedes añadir configuraciones adicionales si lo deseas:
-            modelBuilder.Entity<User>()
-                .HasIndex(u => u.Dni)
-                .IsUnique(); // Evita usuarios duplicados por DNI
+           // modelBuilder.Entity<User>()
+            //    .HasIndex(u => u.Dni)
+             //   .IsUnique(); // Evita usuarios duplicados por DNI
 
             // Relaciones opcionales explícitas (normalmente EF las infiere)
             modelBuilder.Entity<Resource>()

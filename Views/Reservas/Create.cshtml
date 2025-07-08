@@ -1,46 +1,41 @@
 ﻿@model Reservas.Models.Booking
 
 @{
-	ViewData["Title"] = "Nueva Reserva";
+    ViewData["Title"] = "Nueva Reserva";
 }
 
 <h2 class="text-center mt-4 mb-4 text-primary">Nueva Reserva</h2>
 
+<p class="text-muted">DEBUG ResourceId = @Model?.ResourceId</p>
+
 <form asp-action="Create" method="post">
-	@* Campo de tipo de recurso ya seleccionado previamente
-    <div class="form-group mb-3">
-        <label for="tipoRecurso">Tipo de recurso</label>
-        <select id="tipoRecurso" class="form-control" asp-items="ViewBag.TiposRecurso">
-            <option value="">-- Selecciona tipo --</option>
-        </select>
+    @Html.AntiForgeryToken()
 
-    </div>
-    *@
+    <div asp-validation-summary="All" class="text-danger"></div>
 
-	@* Campo de sala ya seleccionado previamente
+    <input type="hidden" asp-for="ResourceId" />
 
     <div class="form-group mb-3">
-        <label for="ResourceId">Sala</label>
-        <select id="sala" name="ResourceId" asp-for="ResourceId" class="form-control">
-            <option value="">-- Selecciona sala --</option>
-        </select>
+        <label asp-for="FechaInicio" class="form-label"></label>
+        <input asp-for="FechaInicio" type="datetime-local" class="form-control" />
+        <span asp-validation-for="FechaInicio" class="text-danger"></span>
     </div>
-    *@
 
-	<div class="form-group mb-3">
-		<label asp-for="FechaInicio"></label>
-		<input asp-for="FechaInicio" type="datetime-local" class="form-control" />
-	</div>
+    <div class="form-group mb-3">
+        <label asp-for="FechaFin" class="form-label"></label>
+        <input asp-for="FechaFin" type="datetime-local" class="form-control" />
+        <span asp-validation-for="FechaFin" class="text-danger"></span>
+    </div>
 
-	<div class="form-group mb-3">
-		<label asp-for="FechaFin"></label>
-		<input asp-for="FechaFin" type="datetime-local" class="form-control" />
-	</div>
-
-	<button type="submit" class="btn btn-primary">Guardar Reserva</button>
+    <button type="submit" class="btn btn-primary">Guardar Reserva</button>
 </form>
 
 @section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}
+
+
+@*@section Scripts {
 	<script>
 		document.getElementById('tipoRecurso').addEventListener('change', function () {
 			var tipoId = this.value;
@@ -56,5 +51,6 @@
 					});
 				});
 		});
-	</script>
+	</script> 
 }
+*@

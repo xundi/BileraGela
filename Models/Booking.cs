@@ -9,7 +9,7 @@ namespace Reservas.Models
         public int ResourceId { get; set; }
         public Resource Resource { get; set; } = null!;
 
-        public int UserId { get; set; }  // 👈 NUEVO
+        public int? UserId { get; set; }  // 👈 NUEVO
         public User User { get; set; } = null!;  // 👈 NUEVO
 
         public DateTime FechaCreacion { get; set; } = DateTime.Now;

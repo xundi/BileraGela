@@ -6,6 +6,15 @@
 
 <h2 class="mb-4">📂 Mis Reservas</h2>
 
+@if (TempData["Mensaje"] != null)
+{
+    <div class="alert alert-success alert-dismissible fade show text-center mx-auto" style="max-width: 600px;" role="alert">
+        @TempData["Mensaje"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Cerrar"></button>
+    </div>
+}
+
+
 @if (!Model.Any())
 {
     <div class="alert alert-info">Aún no tienes reservas.</div>
@@ -15,12 +24,14 @@ else
     <table class="table table-bordered table-striped">
         <thead>
             <tr>
-                <th>Recurso</th>
-                <th>Tipo</th>
-                <th>Centro</th>
-                <th>Inicio</th>
-                <th>Fin</th>
-                <th>Estado</th>
+                <th>@Html.ActionLink("Recurso", "MisReservas", new { sortOrder = ViewBag.SortRecurso })</th>
+                <th>@Html.ActionLink("Tipo", "MisReservas", new { sortOrder = ViewBag.SortTipo })</th>
+                <th>@Html.ActionLink("Centro", "MisReservas", new { sortOrder = ViewBag.SortCentro })</th>
+                <th>@Html.ActionLink("Fin", "MisReservas", new { sortOrder = ViewBag.SortFin })</th>
+                <th>@Html.ActionLink("Inicio", "MisReservas", new { sortOrder = ViewBag.SortFechaInicio })</th>
+                <th>@Html.ActionLink("Estado", "MisReservas", new { sortOrder = ViewBag.SortEstado })</th>
+                <th>@Html.ActionLink("Creada el", "MisReservas", new { sortOrder = ViewBag.SortFechaCreacion })</th>
+
             </tr>
         </thead>
         <tbody>
@@ -33,6 +44,11 @@ else
                     <td>@r.FechaInicio.ToString("g")</td>
                     <td>@r.FechaFin.ToString("g")</td>
                     <td>@r.Estado</td>
+                    <td>@r.FechaCreacion.ToString("dd/MM/yyyy HH:mm")</td>
+
+
+
+
                 </tr>
             }
         </tbody>

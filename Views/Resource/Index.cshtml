@@ -29,7 +29,14 @@
                 <td>
                     <a asp-action="Edit" asp-route-id="@item.Id" class="btn btn-sm btn-warning">Editar</a>
                     <a asp-action="Delete" asp-route-id="@item.Id" class="btn btn-sm btn-danger">Eliminar</a>
+                    <a asp-controller="Reservas"
+                       asp-action="Create"
+                       asp-route-recursoId="@item.Id"
+                       class="btn btn-sm btn-success mt-1">
+                        Reservar
+                    </a>
                 </td>
+                 
             </tr>
         }
     </tbody>
