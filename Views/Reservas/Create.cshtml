@@ -8,49 +8,76 @@
 
 <p class="text-muted">DEBUG ResourceId = @Model?.ResourceId</p>
 
-<form asp-action="Create" method="post">
+<form id="formReserva" asp-action="Create" method="post">
     @Html.AntiForgeryToken()
+    <input type="hidden" asp-for="ResourceId" />
 
     <div asp-validation-summary="All" class="text-danger"></div>
 
-    <input type="hidden" asp-for="ResourceId" />
-
     <div class="form-group mb-3">
         <label asp-for="FechaInicio" class="form-label"></label>
-        <input asp-for="FechaInicio" type="datetime-local" class="form-control" />
+        <input asp-for="FechaInicio" type="datetime-local" class="form-control" id="FechaInicio" />
         <span asp-validation-for="FechaInicio" class="text-danger"></span>
     </div>
 
     <div class="form-group mb-3">
         <label asp-for="FechaFin" class="form-label"></label>
-        <input asp-for="FechaFin" type="datetime-local" class="form-control" />
+        <input asp-for="FechaFin" type="datetime-local" class="form-control" id="FechaFin" />
         <span asp-validation-for="FechaFin" class="text-danger"></span>
     </div>
 
-    <button type="submit" class="btn btn-primary">Guardar Reserva</button>
+    <div class="text-center mt-4">
+        <button type="button" class="btn btn-success" onclick="mostrarModalConfirmacion()">Continuar</button>
+        <a asp-action="Index" class="btn btn-secondary ms-2">Cancelar</a>
+    </div>
 </form>
+
+<!-- Modal -->
+<div class="modal fade" id="modalConfirmacion" tabindex="-1" aria-labelledby="modalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title" id="modalLabel">Confirmar reserva</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+            </div>
+            <div class="modal-body">
+                <p><strong>Recurso:</strong> <span id="resumen-recurso"></span></p>
+                <p><strong>Inicio:</strong> <span id="resumen-inicio"></span></p>
+                <p><strong>Fin:</strong> <span id="resumen-fin"></span></p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <button type="submit" class="btn btn-primary" form="formReserva">Confirmar y guardar</button>
+            </div>
+        </div>
+    </div>
+</div>
 
 @section Scripts {
     <partial name="_ValidationScriptsPartial" />
+    <script>
+        function mostrarModalConfirmacion() {
+            const inicio = new Date(document.getElementById("FechaInicio").value);
+            const fin = new Date(document.getElementById("FechaFin").value);
+
+            const formatDate = (date) =>
+                date.toLocaleString("es-ES", {
+                    day: "2-digit",
+                    month: "2-digit",
+                    year: "numeric",
+                    hour: "2-digit",
+                    minute: "2-digit"
+                });
+
+            document.getElementById("resumen-inicio").textContent = formatDate(inicio);
+            document.getElementById("resumen-fin").textContent = formatDate(fin);
+
+            const select = document.getElementById("ResourceId");
+            const salaNombre = select?.options[select.selectedIndex]?.text || "@Model.Sala";
+            document.getElementById("resumen-recurso").textContent = salaNombre;
+
+            const modal = new bootstrap.Modal(document.getElementById('modalConfirmacion'));
+            modal.show();
+        }
+    </script>
 }
-
-
-@*@section Scripts {
-	<script>
-		document.getElementById('tipoRecurso').addEventListener('change', function () {
-			var tipoId = this.value;
-			var salaSelect = document.getElementById('sala');
-			salaSelect.innerHTML = '<option value="">Cargando salas...</option>';
-
-			fetch(`/Reservas/GetSalasPorTipo?tipoId=${tipoId}`)
-				.then(response => response.json())
-				.then(data => {
-					salaSelect.innerHTML = '<option value="">-- Selecciona sala --</option>';
-					data.forEach(sala => {
-						salaSelect.innerHTML += `<option value="${sala.id}">${sala.nombre}</option>`;
-					});
-				});
-		});
-	</script> 
-}
-*@

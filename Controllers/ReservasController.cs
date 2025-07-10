@@ -65,10 +65,15 @@ namespace Reservas.Controllers
             return Json(bookings);
         }
 
+        
         [HttpGet]
         public async Task<IActionResult> Create(int recursoId)
         {
-           
+            var recurso = await _context.Resources.FindAsync(recursoId);
+            if (recurso == null) return NotFound();
+
+            ViewBag.NombreRecurso = recurso.NameSpanish;
+
             var booking = new Booking
             {
                 ResourceId = recursoId,
@@ -78,6 +83,8 @@ namespace Reservas.Controllers
 
             return View(booking);
         }
+
+
 
 
 
@@ -143,6 +150,13 @@ namespace Reservas.Controllers
 
             booking.UserId = usuario.Id;
 
+            if (booking.FechaFin <= booking.FechaInicio)
+            {
+                ModelState.AddModelError("", "❌ La fecha de fin no puede ser menor o igual a la de inicio.");
+                return View(booking);
+            }
+
+
             if (ModelState.IsValid)
             {
                 booking.FechaCreacion = DateTime.Now;
@@ -151,6 +165,21 @@ namespace Reservas.Controllers
 
                 var sala = await _context.Resources.FindAsync(booking.ResourceId);
                 booking.Sala = sala?.NameSpanish ?? "Desconocida";
+
+                // Validar solapamiento (NO permitir doble reserva misma sala/día/hora)
+                bool hayConflicto = await _context.Bookings.AnyAsync(b =>
+                    b.ResourceId == booking.ResourceId &&
+                    b.Id != booking.Id &&
+                    b.FechaInicio < booking.FechaFin &&
+                    b.FechaFin > booking.FechaInicio
+                );
+
+                if (hayConflicto)
+                {
+                    ModelState.AddModelError("", "❌ Ya existe una reserva para esta sala en ese horario.");
+                    return View(booking);
+                }
+
 
                 _context.Add(booking);
                 await _context.SaveChangesAsync();
@@ -179,6 +208,7 @@ namespace Reservas.Controllers
             var dni = User.Identity?.Name;
 
             // ViewBag para controlar orden actual en la vista
+            ViewBag.CurrentSort = sortOrder;
             ViewBag.SortFechaInicio = String.IsNullOrEmpty(sortOrder) ? "fechainicio_desc" : "";
             ViewBag.SortFechaCreacion = sortOrder == "fechacreacion" ? "fechacreacion_desc" : "fechacreacion";
             ViewBag.SortEstado = sortOrder == "estado" ? "estado_desc" : "estado";
@@ -214,7 +244,98 @@ namespace Reservas.Controllers
             };
 
             return View(await reservas.ToListAsync());
+
+
         }
+        // GET: Reservas/Edit/5
+        [HttpGet]
+        public async Task<IActionResult> Edit(int id)
+        {
+            var booking = await _context.Bookings.FindAsync(id);
+            if (booking == null)
+                return NotFound();
+
+            return View(booking);
+        }
+
+        // POST: Reservas/Edit/5
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Edit(int id, Booking booking)
+        {
+            if (id != booking.Id)
+                return NotFound();
+
+            var dni = User.Identity?.Name;
+
+            if (booking.FechaFin <= booking.FechaInicio)
+            {
+                ModelState.AddModelError("", "❌ La fecha de fin no puede ser menor o igual a la de inicio.");
+                return View(booking);
+            }
+
+
+            if (!ModelState.IsValid)
+                return View(booking);
+
+            // Validar conflicto de horario
+            bool hayConflicto = await _context.Bookings.AnyAsync(b =>
+                b.ResourceId == booking.ResourceId &&
+                b.Id != booking.Id &&
+                b.FechaInicio < booking.FechaFin &&
+                b.FechaFin > booking.FechaInicio
+            );
+
+            if (hayConflicto)
+            {
+                ModelState.AddModelError("", "❌ Ya existe una reserva para esta sala en ese horario.");
+                return View(booking);
+            }
+
+            try
+            {
+                booking.Usuario = dni;
+                booking.FechaCreacion = DateTime.Now;
+                _context.Update(booking);
+                await _context.SaveChangesAsync();
+                TempData["Mensaje"] = "✅ Reserva actualizada con éxito.";
+                return RedirectToAction(nameof(MisReservas));
+            }
+            catch
+            {
+                return View(booking);
+            }
+        }
+        // GET: Reservas/Delete/5
+        [HttpGet] // ← ¡IMPORTANTE! Este atributo permite acceder desde el navegador
+        public async Task<IActionResult> Delete(int id)
+        {
+            var reserva = await _context.Bookings
+                .Include(b => b.Resource)
+                .FirstOrDefaultAsync(b => b.Id == id);
+
+            if (reserva == null)
+                return NotFound();
+
+            return View(reserva);
+        }
+
+        // POST: Reservas/Delete/5
+        [HttpPost, ActionName("Delete")]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> DeleteConfirmed(int id)
+        {
+            var booking = await _context.Bookings.FindAsync(id);
+            if (booking == null)
+                return NotFound();
+
+            _context.Bookings.Remove(booking);
+            await _context.SaveChangesAsync();
+
+            TempData["Mensaje"] = "🗑️ Reserva eliminada correctamente.";
+            return RedirectToAction(nameof(MisReservas));
+        }
+
 
 
         // AJAX: Obtener salas por tipo
@@ -232,7 +353,7 @@ namespace Reservas.Controllers
 }
 
 
-// CRUD automático (lo que ya tenías)
+// CRUD automático 
 /*  public ActionResult Details(int id) => View();
   public ActionResult Edit(int id) => View();
   [HttpPost]

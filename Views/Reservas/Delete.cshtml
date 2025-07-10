@@ -1,0 +1,40 @@
+﻿@model Reservas.Models.Booking
+
+@{
+    ViewData["Title"] = "Eliminar Reserva";
+}
+
+<h2 class="mb-4 text-danger">🗑️ Eliminar Reserva</h2>
+
+<h5>¿Estás seguro de que deseas eliminar la siguiente reserva?</h5>
+
+<div class="border p-3 mb-3">
+    <dl class="row">
+
+        <dt class="col-sm-3">Recurso</dt>
+        <dd class="col-sm-9">@Model.Resource?.NameSpanish</dd>
+
+        <dt class="col-sm-3">Sala:</dt>
+        <dd class="col-sm-9">@Model.Sala</dd>
+
+        <dt class="col-sm-3">Inicio:</dt>
+        <dd class="col-sm-9">@Model.FechaInicio.ToString("g")</dd>
+
+        <dt class="col-sm-3">Fin:</dt>
+        <dd class="col-sm-9">@Model.FechaFin.ToString("g")</dd>
+
+        <dt class="col-sm-3">Estado:</dt>
+        <dd class="col-sm-9">@Model.Estado</dd>
+    </dl>
+
+    <form asp-action="Delete" method="post">
+
+        <input type="hidden" asp-for="Id" />
+        <button type="submit" class="btn btn-danger">Sí, eliminar</button>
+        <a asp-action="MisReservas" class="btn btn-secondary">Cancelar</a>
+    </form>
+
+
+</div>
+
+

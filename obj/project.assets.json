@@ -6750,11 +6750,11 @@
   "project": {
     "version": "1.0.0",
     "restore": {
-      "projectUniqueName": "C:\\Users\\72457992B\\Desktop\\PROIEKTUA BILERA GELEN ERRESERBA\\Innotu Project\\Idoia\\WebApplication11\\Reservas.csproj",
+      "projectUniqueName": "C:\\Users\\72457992B\\Desktop\\ERRESERBEN KUDEAKETA\\TFG\\Sistema Web para la Gestión de Reservas\\Reservas.csproj",
       "projectName": "Reservas",
-      "projectPath": "C:\\Users\\72457992B\\Desktop\\PROIEKTUA BILERA GELEN ERRESERBA\\Innotu Project\\Idoia\\WebApplication11\\Reservas.csproj",
+      "projectPath": "C:\\Users\\72457992B\\Desktop\\ERRESERBEN KUDEAKETA\\TFG\\Sistema Web para la Gestión de Reservas\\Reservas.csproj",
       "packagesPath": "C:\\Users\\72457992B\\.nuget\\packages\\",
-      "outputPath": "C:\\Users\\72457992B\\Desktop\\PROIEKTUA BILERA GELEN ERRESERBA\\Innotu Project\\Idoia\\WebApplication11\\obj\\",
+      "outputPath": "C:\\Users\\72457992B\\Desktop\\ERRESERBEN KUDEAKETA\\TFG\\Sistema Web para la Gestión de Reservas\\obj\\",
       "projectStyle": "PackageReference",
       "fallbackFolders": [
         "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"

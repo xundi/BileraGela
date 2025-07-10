@@ -1,8 +1,8 @@
 {
   "version": 2,
-  "dgSpecHash": "UYyAeSljROQ=",
+  "dgSpecHash": "xGEX3ALMaY0=",
   "success": true,
-  "projectFilePath": "C:\\Users\\72457992B\\Desktop\\PROIEKTUA BILERA GELEN ERRESERBA\\Innotu Project\\Idoia\\WebApplication11\\Reservas.csproj",
+  "projectFilePath": "C:\\Users\\72457992B\\Desktop\\ERRESERBEN KUDEAKETA\\TFG\\Sistema Web para la Gestión de Reservas\\Reservas.csproj",
   "expectedPackageFiles": [
     "C:\\Users\\72457992B\\.nuget\\packages\\humanizer\\2.14.1\\humanizer.2.14.1.nupkg.sha512",
     "C:\\Users\\72457992B\\.nuget\\packages\\humanizer.core\\2.14.1\\humanizer.core.2.14.1.nupkg.sha512",
