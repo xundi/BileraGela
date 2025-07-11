@@ -18,14 +18,45 @@ namespace Reservas.Controllers
         }
 
         // GET: Resource
-        public async Task<IActionResult> Index()
+        public async Task<IActionResult> Index(string centro, string tipo)
         {
-            var resources = await _context.Resources
+            var query = _context.Resources
                 .Include(r => r.Center)
                 .Include(r => r.ResourceType)
+                .AsQueryable();
+
+            if (!string.IsNullOrEmpty(centro))
+                query = query.Where(r => r.Center.NameSpanish == centro);
+
+            if (!string.IsNullOrEmpty(tipo))
+                query = query.Where(r => r.ResourceType.NameSpanish == tipo);
+
+            var centros = await _context.Centers
+                .Select(c => c.NameSpanish)
+                .Distinct()
+                .OrderBy(n => n)
                 .ToListAsync();
-            return View(resources);
+
+            var tipos = await _context.ResourceTypes
+                .Select(t => t.NameSpanish)
+                .Distinct()
+                .OrderBy(n => n)
+                .ToListAsync();
+
+            ViewBag.Centros = centros;
+            ViewBag.Tipos = tipos;
+
+            var recursos = await query
+                .OrderBy(r => r.Center.NameSpanish)
+                .ThenBy(r => r.ResourceType.NameSpanish)
+                .ThenBy(r => r.NameEuskera)
+                .ThenBy(r => r.NameSpanish)
+                .ToListAsync();
+
+            return View(recursos);
         }
+
+
 
         // GET: Resource/Create
         public async Task<IActionResult> Create()

@@ -65,20 +65,41 @@ namespace Reservas.Controllers
             return Json(bookings);
         }
 
-        
         [HttpGet]
-        public async Task<IActionResult> Create(int recursoId)
+        public async Task<IActionResult> SeleccionarRecurso()
         {
-            var recurso = await _context.Resources.FindAsync(recursoId);
-            if (recurso == null) return NotFound();
+            var tipos = await _context.ResourceTypes.ToListAsync();
+            ViewBag.TiposRecurso = tipos;
+            return View();
+        }
 
-            ViewBag.NombreRecurso = recurso.NameSpanish;
+
+
+
+        // GET: Reservas/Create
+        [HttpGet]
+        public async Task<IActionResult> Create(int? centroId, int? tipoId, int? recursoId)
+        {
+            if (recursoId == null)
+            {
+                TempData["Error"] = "⚠️ Debes seleccionar un recurso válido.";
+                return RedirectToAction("SeleccionarRecurso"); // O redirige donde prefieras
+            }
+
+            var recurso = await _context.Resources
+                .Include(r => r.Center)
+                .Include(r => r.ResourceType)
+                .FirstOrDefaultAsync(r => r.Id == recursoId);
+
+            if (recurso == null)
+                return NotFound();
 
             var booking = new Booking
             {
-                ResourceId = recursoId,
+                ResourceId = recurso.Id,
+                Sala = recurso.NameSpanish,
                 FechaInicio = DateTime.Now,
-                FechaFin = DateTime.Now.AddHours(1)
+                FechaFin = DateTime.Now.AddHours(1) // Por ejemplo, una hora más tarde
             };
 
             return View(booking);
@@ -88,39 +109,6 @@ namespace Reservas.Controllers
 
 
 
-        // GET: Crear reserva (con tipos)
-        /*[HttpGet]
-        public async Task<IActionResult> Create(int tipoId)
-        {
-            if (tipoId == 0)
-                return RedirectToAction(nameof(SeleccionarTipo));
-
-            var tipos = await _context.ResourceTypes
-                .Select(t => new { t.Id, Nombre = t.NameSpanish })
-                .ToListAsync();
-            ViewBag.TiposRecurso = new SelectList(tipos, "Id", "Nombre");
-
-            var salas = await _context.Resources
-                .Where(r => r.ResourceTypeId == tipoId)
-                .Select(r => new { r.Id, r.NameSpanish })
-                .ToListAsync();
-            ViewBag.Salas = new SelectList(salas, "Id", "NameSpanish");
-
-            return View();
-        }*/
-
-        // GET: Crear reserva directamente con recurso seleccionado
-        /* [HttpGet]
-         public IActionResult CreateDesdeRecurso(int recursoId)
-         {
-             var booking = new Booking
-             {
-                 ResourceId = recursoId
-             };
-
-             return View("Create", booking);
-         }
-        */
 
 
 
@@ -258,7 +246,6 @@ namespace Reservas.Controllers
             return View(booking);
         }
 
-        // POST: Reservas/Edit/5
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Edit(int id, Booking booking)
@@ -266,7 +253,10 @@ namespace Reservas.Controllers
             if (id != booking.Id)
                 return NotFound();
 
-            var dni = User.Identity?.Name;
+            ModelState.Remove("Resource");
+            ModelState.Remove("User");
+            ModelState.Remove("Sala");
+            ModelState.Remove("Usuario");
 
             if (booking.FechaFin <= booking.FechaInicio)
             {
@@ -274,38 +264,31 @@ namespace Reservas.Controllers
                 return View(booking);
             }
 
-
-            if (!ModelState.IsValid)
-                return View(booking);
-
-            // Validar conflicto de horario
-            bool hayConflicto = await _context.Bookings.AnyAsync(b =>
-                b.ResourceId == booking.ResourceId &&
-                b.Id != booking.Id &&
-                b.FechaInicio < booking.FechaFin &&
-                b.FechaFin > booking.FechaInicio
-            );
-
-            if (hayConflicto)
-            {
-                ModelState.AddModelError("", "❌ Ya existe una reserva para esta sala en ese horario.");
-                return View(booking);
-            }
-
             try
             {
-                booking.Usuario = dni;
-                booking.FechaCreacion = DateTime.Now;
-                _context.Update(booking);
+                var reservaExistente = await _context.Bookings.FindAsync(id);
+                if (reservaExistente == null)
+                    return NotFound();
+
+                reservaExistente.FechaInicio = booking.FechaInicio;
+                reservaExistente.FechaFin = booking.FechaFin;
+                reservaExistente.Estado = booking.Estado;
+
+                _context.Update(reservaExistente);
                 await _context.SaveChangesAsync();
-                TempData["Mensaje"] = "✅ Reserva actualizada con éxito.";
-                return RedirectToAction(nameof(MisReservas));
+
+                TempData["Mensaje"] = "✅ Cambios guardados correctamente.";
+                return RedirectToAction("MisReservas"); // 👈 ESTA ES LA REDIRECCIÓN
             }
-            catch
+            catch (DbUpdateConcurrencyException)
             {
-                return View(booking);
+                if (!_context.Bookings.Any(e => e.Id == booking.Id))
+                    return NotFound();
+                else
+                    throw;
             }
         }
+
         // GET: Reservas/Delete/5
         [HttpGet] // ← ¡IMPORTANTE! Este atributo permite acceder desde el navegador
         public async Task<IActionResult> Delete(int id)
@@ -352,24 +335,5 @@ namespace Reservas.Controllers
     }
 }
 
-
-// CRUD automático 
-/*  public ActionResult Details(int id) => View();
-  public ActionResult Edit(int id) => View();
-  [HttpPost]
-  [ValidateAntiForgeryToken]
-  public ActionResult Edit(int id, IFormCollection collection)
-  {
-      try { return RedirectToAction(nameof(Index)); }
-      catch { return View(); }
-  }
-  public ActionResult Delete(int id) => View();
-  [HttpPost]
-  [ValidateAntiForgeryToken]
-  public ActionResult Delete(int id, IFormCollection collection)
-  {
-      try { return RedirectToAction(nameof(Index)); }
-      catch { return View(); }
-  }*/
 
 

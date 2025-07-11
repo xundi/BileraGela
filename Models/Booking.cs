@@ -1,4 +1,5 @@
 ﻿using System;
+using System.ComponentModel.DataAnnotations;
 
 namespace Reservas.Models
 {
@@ -13,8 +14,12 @@ namespace Reservas.Models
         public User User { get; set; } = null!;  // 👈 NUEVO
 
         public DateTime FechaCreacion { get; set; } = DateTime.Now;
+        [DataType(DataType.DateTime)]
         public DateTime FechaInicio { get; set; }
+
+        [DataType(DataType.DateTime)]
         public DateTime FechaFin { get; set; }
+
 
         public string Estado { get; set; } = string.Empty;
         public string Sala { get; set; } = string.Empty;

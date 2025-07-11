@@ -60,8 +60,16 @@
                             else if (tipoUsuario == 2)
                             {
                                 <li class="nav-item">
-                                    <a class="nav-link text-dark" asp-controller="Resource" asp-action="Index">Ver salas</a>
+                                    <a class="nav-link text-dark"
+                                       asp-controller="Reservas"
+                                       asp-action="Create"
+                                       asp-route-centroId="1"
+                                       asp-route-tipoId="1"
+                                       asp-route-recursoId="4">
+                                        ➕ Hacer reserva
+                                    </a>
                                 </li>
+
                                 <li class="nav-item">
                                     <a class="nav-link text-dark" asp-controller="Reservas" asp-action="Calendario">Calendario</a>
                                 </li>
@@ -74,10 +82,12 @@
                                     <a class="nav-link text-dark" asp-controller="Reservas" asp-action="Calendario">📅 Calendario</a>
                                 </li>
                                 <li class="nav-item">
-                                    <a class="nav-link text-dark" asp-controller="Resource" asp-action="Index">🧰 Ver salas</a>
+                                    <a class="nav-link text-dark" asp-controller="Resource" asp-action="Index">🧰 Ver Recursos</a>
                                 </li>
                                 <li class="nav-item">
-                                    <a class="nav-link text-dark" asp-controller="Reservas" asp-action="Create">➕ Hacer reserva</a>
+                                    <a class="nav-link text-dark"
+                                       asp-controller="Reservas"
+                                       asp-action="SeleccionarRecurso">➕ Hacer reserva</a>
                                 </li>
                                 <li class="nav-item">
                                 <a asp-controller="Reservas" asp-action="MisReservas" class="nav-link text-dark">📂 Mis reservas</a>

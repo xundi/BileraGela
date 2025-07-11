@@ -1,0 +1,42 @@
+﻿@*
+    For more information on enabling MVC for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
+*@
+@{
+    
+    ViewData["Title"] = "Seleccionar tipo de recurso";
+    var tipos = ViewBag.TiposRecurso as IEnumerable<Reservas.Models.ResourceType>;
+}
+
+}
+
+<h2 class="text-center mt-4 mb-4 text-primary">¿Qué tipo de recurso deseas reservar?</h2>
+
+<div class="container">
+    <form asp-controller="Reservas" asp-action="Create" method="get">
+        <div class="form-group text-center">
+            <select name="tipoId" class="form-control w-50 d-inline">
+                <option value="">-- Selecciona tipo de recurso --</option>
+                @if (tipos != null)
+                {
+                    foreach (var tipo in tipos)
+                    {
+                        <option value="@tipo.Id">@tipo.NameSpanish</option>
+                    }
+                }
+                else
+                {
+                    <option disabled selected>No hay tipos disponibles</option>
+                }
+
+
+                @foreach (var tipo in tipos)
+                {
+                    <option value="@tipo.Id">@tipo.NameSpanish</option>
+
+                }
+            </select>
+            <button type="submit" class="btn btn-success ms-2">Continuar</button>
+        </div>
+    </form>
+</div>
+}
