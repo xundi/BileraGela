@@ -78,19 +78,21 @@
                             @* 👤 USUARIO NORMAL *@
                             else if (tipoUsuario == 1)
                             {
-                                <li class="nav-item">
-                                    <a class="nav-link text-dark" asp-controller="Reservas" asp-action="Calendario">📅 Calendario</a>
-                                </li>
+                                
                                 <li class="nav-item">
                                     <a class="nav-link text-dark" asp-controller="Resource" asp-action="Index">🧰 Ver Recursos</a>
                                 </li>
                                 <li class="nav-item">
                                     <a class="nav-link text-dark"
-                                       asp-controller="Reservas"
-                                       asp-action="SeleccionarRecurso">➕ Hacer reserva</a>
+                                       asp-controller="Home"
+                                       asp-action="Panel">➕ Hacer reserva</a>
+
                                 </li>
                                 <li class="nav-item">
                                 <a asp-controller="Reservas" asp-action="MisReservas" class="nav-link text-dark">📂 Mis reservas</a>
+                                </li>
+                                <li class="nav-item">
+                                    <a class="nav-link text-dark" asp-controller="Reservas" asp-action="Calendario">📅 Calendario</a>
                                 </li>
                             }
                         </ul>
@@ -107,12 +109,16 @@
                                 <a class="nav-link text-dark" asp-controller="Account" asp-action="Logout">Cerrar sesión</a>
                             </li>
                         }
-                        else
+                        else if (!Context.Request.Path.Value.ToLower().Contains("/account/login") &&
+                        !Context.Request.Path.Value.ToLower().Equals("/") &&
+                        !Context.Request.Path.Value.ToLower().Contains("/home/index"))
                         {
                             <li class="nav-item">
                                 <a class="nav-link text-dark" asp-controller="Account" asp-action="Login">Iniciar sesión</a>
                             </li>
                         }
+
+
                     </ul>
 
                 </div>

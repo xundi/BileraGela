@@ -138,9 +138,15 @@ namespace Reservas.Controllers
 
             booking.UserId = usuario.Id;
 
+            if (booking.FechaInicio < DateTime.Now)
+            {
+                ModelState.AddModelError("FechaInicio", "❌ La fecha de inicio no puede ser anterior al momento actual.");
+                return View(booking);
+            }
+
             if (booking.FechaFin <= booking.FechaInicio)
             {
-                ModelState.AddModelError("", "❌ La fecha de fin no puede ser menor o igual a la de inicio.");
+                ModelState.AddModelError("FechaFin", "❌ La fecha de fin debe ser posterior a la de inicio.");
                 return View(booking);
             }
 
@@ -188,7 +194,7 @@ namespace Reservas.Controllers
 
 
 
-        
+
         // GET: Reservas/MisReservas
         [HttpGet]
         public async Task<IActionResult> MisReservas(string sortOrder)
@@ -204,7 +210,6 @@ namespace Reservas.Controllers
             ViewBag.SortTipo = sortOrder == "tipo" ? "tipo_desc" : "tipo";
             ViewBag.SortCentro = sortOrder == "centro" ? "centro_desc" : "centro";
             ViewBag.SortFin = sortOrder == "fechafin" ? "fechafin_desc" : "fechafin";
-
 
             var reservas = _context.Bookings
                 .Include(b => b.Resource)
@@ -228,13 +233,12 @@ namespace Reservas.Controllers
                 "centro_desc" => reservas.OrderByDescending(r => r.Resource.Center.NameSpanish),
                 "fechafin" => reservas.OrderBy(r => r.FechaFin),
                 "fechafin_desc" => reservas.OrderByDescending(r => r.FechaFin),
-                _ => reservas.OrderBy(r => r.FechaInicio),
+                _ => reservas.OrderByDescending(r => r.FechaCreacion), // ✅ orden por defecto actualizado
             };
 
             return View(await reservas.ToListAsync());
-
-
         }
+
         // GET: Reservas/Edit/5
         [HttpGet]
         public async Task<IActionResult> Edit(int id)
