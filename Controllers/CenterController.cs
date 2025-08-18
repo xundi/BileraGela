@@ -45,18 +45,33 @@ namespace Reservas.Controllers
         // GET: Center/Create
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create([Bind("Id,NameEuskera,NameSpanish")] Center center)
+        public async Task<IActionResult> Create(Center center)
         {
-            if (!ModelState.IsValid)
+            // Verifica si ya existe por NameSpanish o NameEuskera (puedes ajustar según necesites)
+            bool existeCentro = await _context.Centers.AnyAsync(c =>
+                c.NameSpanish.ToLower() == center.NameSpanish.ToLower() ||
+                c.NameEuskera.ToLower() == center.NameEuskera.ToLower());
+
+            if (existeCentro)
             {
+                TempData["Mensaje"] = "⚠️ Ya existe un centro con ese nombre.";
+                TempData["TipoMensaje"] = "warning";
                 return View(center);
             }
 
-            _context.Add(center);
-            await _context.SaveChangesAsync();
-            TempData["Mensaje"] = "Centro creado correctamente.";
-            return RedirectToAction(nameof(Index));
+            if (ModelState.IsValid)
+            {
+                _context.Add(center);
+                await _context.SaveChangesAsync();
+
+                TempData["Mensaje"] = "✅ Centro creado correctamente.";
+                TempData["TipoMensaje"] = "success";
+                return RedirectToAction(nameof(Index));
+            }
+
+            return View(center);
         }
+
 
 
 

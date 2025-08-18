@@ -18,16 +18,26 @@ namespace Reservas.Controllers
         }
 
         // GET: ReservasController
-        public ActionResult Index()
+        public IActionResult Calendario()
         {
-            return View();
+            var recursos = _context.Resources
+                .Include(r => r.Center)
+                .Include(r => r.ResourceType)
+                .ToList();
+
+            var reservas = _context.Bookings
+                .Include(r => r.Resource)
+                .ToList();
+
+            var viewModel = new CalendarioViewModel
+            {
+                Recursos = recursos,
+                Reservas = reservas
+            };
+
+            return View(viewModel);
         }
 
-        // GET: ReservasController/Calendario
-        public ActionResult Calendario()
-        {
-            return View();
-        }
         // GET: ReservasController/SeleccionarTipo
         [HttpGet]
         public async Task<IActionResult> SeleccionarTipo()
@@ -75,7 +85,6 @@ namespace Reservas.Controllers
 
 
 
-
         // GET: Reservas/Create
         [HttpGet]
         public async Task<IActionResult> Create(int? centroId, int? tipoId, int? recursoId)
@@ -83,7 +92,7 @@ namespace Reservas.Controllers
             if (recursoId == null)
             {
                 TempData["Error"] = "⚠️ Debes seleccionar un recurso válido.";
-                return RedirectToAction("SeleccionarRecurso"); // O redirige donde prefieras
+                return RedirectToAction("SeleccionarRecurso");
             }
 
             var recurso = await _context.Resources
@@ -94,12 +103,15 @@ namespace Reservas.Controllers
             if (recurso == null)
                 return NotFound();
 
+            // ✅ Define 'ahora' antes del objeto
+            var ahora = DateTime.Now.AddMinutes(1);
+
             var booking = new Booking
             {
                 ResourceId = recurso.Id,
                 Sala = recurso.NameSpanish,
-                FechaInicio = DateTime.Now,
-                FechaFin = DateTime.Now.AddHours(1) // Por ejemplo, una hora más tarde
+                FechaInicio = ahora,
+                FechaFin = ahora.AddHours(1)
             };
 
             return View(booking);
@@ -178,7 +190,7 @@ namespace Reservas.Controllers
                 _context.Add(booking);
                 await _context.SaveChangesAsync();
 
-                TempData["Mensaje"] = "✅ Reserva guardada con éxito.";
+                TempData["Mensaje"] = " Reserva guardada con éxito.";
 
 
                 return RedirectToAction(nameof(MisReservas));
@@ -336,6 +348,48 @@ namespace Reservas.Controllers
 
             return Json(salas);
         }
+        [HttpGet]
+        public async Task<IActionResult> Validar()
+        {
+            var dni = User.Identity?.Name;
+
+            var usuario = await _context.Users.FirstOrDefaultAsync(u => u.Dni == dni);
+            if (usuario == null)
+                return Unauthorized();
+
+            var recursosAsignados = await _context.ResourceValidators
+                .Where(rv => rv.UserId == usuario.Id)
+                .Select(rv => rv.ResourceId)
+                .ToListAsync();
+
+            var reservas = await _context.Bookings
+                .Include(b => b.Resource)
+                    .ThenInclude(r => r.Center)
+                .Where(b => recursosAsignados.Contains(b.ResourceId))
+                .Where(b => b.Estado == "Pendiente")
+                .ToListAsync();
+
+            return View(reservas); // ⬅️ vista correspondiente
+        }
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> ValidarReserva(int id, string accion)
+        {
+            var reserva = await _context.Bookings.FindAsync(id);
+            if (reserva == null)
+                return NotFound();
+
+            if (accion == "validar")
+                reserva.Estado = "Confirmada";
+            else if (accion == "rechazar")
+                reserva.Estado = "Rechazada";
+
+            await _context.SaveChangesAsync();
+            TempData["Mensaje"] = $"✅ Reserva {(accion == "validar" ? "validada" : "rechazada")} con éxito.";
+            return RedirectToAction(nameof(Validar));
+        }
+
+
     }
 }
 

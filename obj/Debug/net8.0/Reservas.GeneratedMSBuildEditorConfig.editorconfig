@@ -100,6 +100,10 @@ build_metadata.AdditionalFiles.CssScope =
 build_metadata.AdditionalFiles.TargetPath = Vmlld3NcUmVzZXJ2YXNcU2VsZWNjaW9uYXJUaXBvLmNzaHRtbA==
 build_metadata.AdditionalFiles.CssScope = 
 
+[C:/Users/72457992B/Desktop/ERRESERBEN KUDEAKETA/TFG/Sistema Web para la Gestión de Reservas/Views/Reservas/Validar.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcUmVzZXJ2YXNcVmFsaWRhci5jc2h0bWw=
+build_metadata.AdditionalFiles.CssScope = 
+
 [C:/Users/72457992B/Desktop/ERRESERBEN KUDEAKETA/TFG/Sistema Web para la Gestión de Reservas/Views/ResourceType/Create.cshtml]
 build_metadata.AdditionalFiles.TargetPath = Vmlld3NcUmVzb3VyY2VUeXBlXENyZWF0ZS5jc2h0bWw=
 build_metadata.AdditionalFiles.CssScope = 
@@ -142,6 +146,10 @@ build_metadata.AdditionalFiles.CssScope =
 
 [C:/Users/72457992B/Desktop/ERRESERBEN KUDEAKETA/TFG/Sistema Web para la Gestión de Reservas/Views/Shared/Error.cshtml]
 build_metadata.AdditionalFiles.TargetPath = Vmlld3NcU2hhcmVkXEVycm9yLmNzaHRtbA==
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/72457992B/Desktop/ERRESERBEN KUDEAKETA/TFG/Sistema Web para la Gestión de Reservas/Views/Shared/_MensajeFlash.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcU2hhcmVkXF9NZW5zYWplRmxhc2guY3NodG1s
 build_metadata.AdditionalFiles.CssScope = 
 
 [C:/Users/72457992B/Desktop/ERRESERBEN KUDEAKETA/TFG/Sistema Web para la Gestión de Reservas/Views/Shared/_ValidationScriptsPartial.cshtml]

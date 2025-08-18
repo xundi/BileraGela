@@ -24,5 +24,8 @@ namespace Reservas.Models
         // Relaciones
         public virtual Center Center { get; set; }
         public virtual ResourceType ResourceType { get; set; }
+
+        public ICollection<ResourceValidator> Validadores { get; set; }
+
     }
 }

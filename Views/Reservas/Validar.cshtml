@@ -1,0 +1,51 @@
+﻿@model List<Reservas.Models.Booking>
+
+@{
+    ViewData["Title"] = "Validar Reservas";
+}
+
+<h2 class="mb-4 text-center text-primary">✅ Reservas pendientes por validar</h2>
+
+@if (!Model.Any())
+{
+    <div class="alert alert-info text-center">No hay reservas pendientes.</div>
+}
+else
+{
+    <table class="table table-bordered table-hover">
+        <thead class="table-light">
+            <tr>
+                <th>Centro</th>
+                <th>Recurso</th>
+                <th>Inicio</th>
+                <th>Fin</th>
+                <th>Usuario</th>
+                <th>Acciones</th>
+            </tr>
+        </thead>
+        <tbody>
+        @foreach (var reserva in Model)
+        {
+            <tr>
+                <td>@reserva.Resource?.Center?.NameSpanish</td>
+                <td>@reserva.Resource?.NameSpanish</td>
+                <td>@reserva.FechaInicio.ToString("g")</td>
+                <td>@reserva.FechaFin.ToString("g")</td>
+                <td>@reserva.Usuario</td>
+                <td>
+                    <form asp-action="ValidarReserva" method="post" class="d-inline">
+                        <input type="hidden" name="id" value="@reserva.Id" />
+                        <input type="hidden" name="accion" value="validar" />
+                        <button type="submit" class="btn btn-success btn-sm">✅ Validar</button>
+                    </form>
+                    <form asp-action="ValidarReserva" method="post" class="d-inline">
+                        <input type="hidden" name="id" value="@reserva.Id" />
+                        <input type="hidden" name="accion" value="rechazar" />
+                        <button type="submit" class="btn btn-danger btn-sm">❌ Rechazar</button>
+                    </form>
+                </td>
+            </tr>
+        }
+        </tbody>
+    </table>
+}

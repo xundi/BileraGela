@@ -14,5 +14,8 @@ namespace Reservas.Models
         public int UserTypeId { get; set; }
 
         public UserType? UserType { get; set; }  // <- Recomendación: Nullable si puede venir nulo
+
+        public ICollection<ResourceValidator> RecursosQueValida { get; set; }
+
     }
 }

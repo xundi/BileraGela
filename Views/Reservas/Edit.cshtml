@@ -1,4 +1,9 @@
 ﻿@model Reservas.Models.Booking
+@using Microsoft.AspNetCore.Http
+@{
+    var tipoUsuario = Context.Session.GetInt32("UserTypeId") ?? 0;
+}
+
 
 @{
     ViewData["Title"] = "Editar Reserva";
@@ -30,13 +35,24 @@
 
     <div class="mb-3">
         <label asp-for="Estado" class="form-label"></label>
-        <select asp-for="Estado" class="form-select">
-            <option>Pendiente</option>
-            <option>Confirmada</option>
-            <option>Cancelada</option>
-        </select>
+
+        @if (tipoUsuario >= 3) // Administrador
+        {
+            <select asp-for="Estado" class="form-select">
+                <option value="Pendiente">Pendiente</option>
+                <option value="Confirmada">Confirmada</option>
+                <option value="Cancelada">Cancelada</option>
+            </select>
+        }
+        else
+        {
+            <input type="text" class="form-control" value="@Model.Estado" readonly />
+            <input type="hidden" asp-for="Estado" />
+        }
+
         <span asp-validation-for="Estado" class="text-danger"></span>
     </div>
+
 
     <button type="submit" class="btn btn-primary">Guardar cambios</button>
     <a asp-action="MisReservas" class="btn btn-secondary">Cancelar</a>

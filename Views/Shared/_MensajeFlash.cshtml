@@ -1,0 +1,18 @@
+﻿@{
+    var mensaje = TempData["Mensaje"] as string;
+    var tipo = TempData["TipoMensaje"] as string ?? "success";
+    var clase = tipo switch
+    {
+        "danger" => "alert-danger",
+        "warning" => "alert-warning",
+        _ => "alert-success"
+    };
+}
+
+@if (!string.IsNullOrEmpty(mensaje))
+{
+    <div class="alert @clase alert-dismissible fade show text-center mx-auto" style="max-width: 600px;" role="alert">
+        <strong>@mensaje</strong>
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Cerrar"></button>
+    </div>
+}
