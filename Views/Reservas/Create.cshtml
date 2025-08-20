@@ -60,63 +60,68 @@
 @section Scripts {
     <partial name="_ValidationScriptsPartial" />
     <script>
-                function mostrarModalConfirmacion() {
-            const inicio = document.getElementById("FechaInicio").value;
-            const fin = document.getElementById("FechaFin").value;
+        (function () {
+          const inicio = document.getElementById("FechaInicio");
+          const fin    = document.getElementById("FechaFin");
 
-            if (!inicio || !fin) {
-                alert("⚠️ Debes completar ambas fechas.");
-                return;
+          const pad = n => String(n).padStart(2, "0");
+          const toLocalInput = d =>
+            `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+
+          // Establece mínimos razonables al cargar
+          (function setMinsNow(){
+            const now = new Date();
+            const nowStr = toLocalInput(now);
+            if (!inicio.min) inicio.min = nowStr;
+            if (!fin.min)    fin.min    = toLocalInput(new Date(now.getTime() + 30*60000));
+          })();
+
+          // 👉 Solo exigimos Fin >= Inicio + 30 min (SIN limitar el día)
+          function enforceMin30() {
+            if (!inicio.value) return;
+            const s = new Date(inicio.value);
+            if (isNaN(s)) return;
+
+            const minEnd = new Date(s.getTime() + 30 * 60000);
+            fin.min = toLocalInput(minEnd);   // ✅ actualiza el mínimo
+
+            const f = new Date(fin.value);
+            if (isNaN(f) || f < minEnd) {
+              fin.value = toLocalInput(minEnd); // ajusta si quedó por debajo
             }
 
+            // ❌ NO ponemos fin.max => puedes cambiar de día libremente
+          }
+
+          inicio.addEventListener("change", enforceMin30);
+          inicio.addEventListener("input",  enforceMin30);
+          enforceMin30();
+
+          // --- Modal + validaciones cliente ---
+          window.mostrarModalConfirmacion = function () {
+            const vIni = inicio.value, vFin = fin.value;
+            if (!vIni || !vFin) { alert("⚠️ Debes completar ambas fechas."); return; }
+
+            const ini   = new Date(vIni);
+            const end   = new Date(vFin);
             const ahora = new Date();
-            const inicioDate = new Date(inicio);
-            const finDate = new Date(fin);
 
-            if (inicioDate < ahora) {
-                alert("⚠️ La fecha y hora de inicio no pueden estar en el pasado.");
-                return;
+            if (ini < ahora) { alert("⚠️ La fecha de inicio no puede estar en el pasado."); return; }
+
+            // ❌ Quitamos restricción de 'mismo día'
+            if (end < new Date(ini.getTime() + 30 * 60000)) {
+              alert("⚠️ La fecha de fin debe ser al menos 30 minutos posterior a la de inicio.");
+              return;
             }
 
-            if (finDate <= inicioDate) {
-                alert("⚠️ La fecha de fin debe ser posterior a la de inicio.");
-                return;
-            }
+            const fmt = d => d.toLocaleString("es-ES",
+              { day:"2-digit", month:"2-digit", year:"numeric", hour:"2-digit", minute:"2-digit" });
 
-            const formatDate = (date) =>
-                date.toLocaleString("es-ES", {
-                    day: "2-digit", month: "2-digit", year: "numeric",
-                    hour: "2-digit", minute: "2-digit"
-                });
+            document.getElementById("resumen-inicio").textContent = fmt(ini);
+            document.getElementById("resumen-fin").textContent    = fmt(end);
 
-            document.getElementById("resumen-inicio").textContent = formatDate(inicioDate);
-            document.getElementById("resumen-fin").textContent = formatDate(finDate);
-
-            const modal = new bootstrap.Modal(document.getElementById('modalConfirmacion'));
-            modal.show();
-        }
-
-
-        document.addEventListener('DOMContentLoaded', function () {
-            const ahora = new Date();
-            const offset = ahora.getTimezoneOffset();
-            const local = new Date(ahora.getTime() - offset * 60000).toISOString().slice(0, 16);
-
-            const inicio = document.getElementById("FechaInicio");
-            const fin = document.getElementById("FechaFin");
-
-            inicio.setAttribute("min", local);
-            fin.setAttribute("min", local);
-
-            // ⏱️ Si cambia FechaInicio, se suma 1h a FechaFin
-            inicio.addEventListener("change", function () {
-                const nuevaInicio = new Date(this.value);
-                if (isNaN(nuevaInicio)) return;
-
-                const nuevaFin = new Date(nuevaInicio.getTime() + 60 * 60 * 1000); // +1 hora
-                const nuevaFinStr = nuevaFin.toISOString().slice(0, 16);
-                fin.value = nuevaFinStr;
-            });
-        });
+            new bootstrap.Modal(document.getElementById('modalConfirmacion')).show();
+          };
+        })();
     </script>
 }

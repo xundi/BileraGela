@@ -553,6 +553,17 @@ C:\Users\72457992B\Desktop\PROIEKTUA BILERA GELEN ERRESERBA\Innotu Project\Idoia
 C:\Users\72457992B\Desktop\PROIEKTUA BILERA GELEN ERRESERBA\Innotu Project\Idoia\WebApplication11\obj\Debug\net8.0\Reservas.pdb
 C:\Users\72457992B\Desktop\PROIEKTUA BILERA GELEN ERRESERBA\Innotu Project\Idoia\WebApplication11\obj\Debug\net8.0\Reservas.genruntimeconfig.cache
 C:\Users\72457992B\Desktop\PROIEKTUA BILERA GELEN ERRESERBA\Innotu Project\Idoia\WebApplication11\obj\Debug\net8.0\ref\Reservas.dll
+C:\Users\72457992B\Desktop\ERRESERBEN KUDEAKETA\TFG\Sistema Web para la Gestión de Reservas\obj\Debug\net8.0\Reservas.csproj.AssemblyReference.cache
+C:\Users\72457992B\Desktop\ERRESERBEN KUDEAKETA\TFG\Sistema Web para la Gestión de Reservas\obj\Debug\net8.0\rpswa.dswa.cache.json
+C:\Users\72457992B\Desktop\ERRESERBEN KUDEAKETA\TFG\Sistema Web para la Gestión de Reservas\obj\Debug\net8.0\Reservas.GeneratedMSBuildEditorConfig.editorconfig
+C:\Users\72457992B\Desktop\ERRESERBEN KUDEAKETA\TFG\Sistema Web para la Gestión de Reservas\obj\Debug\net8.0\Reservas.AssemblyInfoInputs.cache
+C:\Users\72457992B\Desktop\ERRESERBEN KUDEAKETA\TFG\Sistema Web para la Gestión de Reservas\obj\Debug\net8.0\Reservas.AssemblyInfo.cs
+C:\Users\72457992B\Desktop\ERRESERBEN KUDEAKETA\TFG\Sistema Web para la Gestión de Reservas\obj\Debug\net8.0\Reservas.csproj.CoreCompileInputs.cache
+C:\Users\72457992B\Desktop\ERRESERBEN KUDEAKETA\TFG\Sistema Web para la Gestión de Reservas\obj\Debug\net8.0\Reservas.MvcApplicationPartsAssemblyInfo.cs
+C:\Users\72457992B\Desktop\ERRESERBEN KUDEAKETA\TFG\Sistema Web para la Gestión de Reservas\obj\Debug\net8.0\Reservas.MvcApplicationPartsAssemblyInfo.cache
+C:\Users\72457992B\Desktop\ERRESERBEN KUDEAKETA\TFG\Sistema Web para la Gestión de Reservas\obj\Debug\net8.0\Reservas.RazorAssemblyInfo.cache
+C:\Users\72457992B\Desktop\ERRESERBEN KUDEAKETA\TFG\Sistema Web para la Gestión de Reservas\obj\Debug\net8.0\Reservas.RazorAssemblyInfo.cs
+C:\Users\72457992B\Desktop\ERRESERBEN KUDEAKETA\TFG\Sistema Web para la Gestión de Reservas\obj\Debug\net8.0\Reservas.sourcelink.json
 C:\Users\72457992B\Desktop\ERRESERBEN KUDEAKETA\TFG\Sistema Web para la Gestión de Reservas\bin\Debug\net8.0\appsettings.Development.json
 C:\Users\72457992B\Desktop\ERRESERBEN KUDEAKETA\TFG\Sistema Web para la Gestión de Reservas\bin\Debug\net8.0\appsettings.json
 C:\Users\72457992B\Desktop\ERRESERBEN KUDEAKETA\TFG\Sistema Web para la Gestión de Reservas\bin\Debug\net8.0\Reservas.staticwebassets.runtime.json
@@ -1079,31 +1090,20 @@ C:\Users\72457992B\Desktop\ERRESERBEN KUDEAKETA\TFG\Sistema Web para la Gestión
 C:\Users\72457992B\Desktop\ERRESERBEN KUDEAKETA\TFG\Sistema Web para la Gestión de Reservas\bin\Debug\net8.0\runtimes\win\lib\net7.0\System.Drawing.Common.dll
 C:\Users\72457992B\Desktop\ERRESERBEN KUDEAKETA\TFG\Sistema Web para la Gestión de Reservas\bin\Debug\net8.0\runtimes\win\lib\net7.0\System.Security.Cryptography.ProtectedData.dll
 C:\Users\72457992B\Desktop\ERRESERBEN KUDEAKETA\TFG\Sistema Web para la Gestión de Reservas\bin\Debug\net8.0\runtimes\win\lib\net7.0\System.Windows.Extensions.dll
-C:\Users\72457992B\Desktop\ERRESERBEN KUDEAKETA\TFG\Sistema Web para la Gestión de Reservas\obj\Debug\net8.0\Reservas.csproj.AssemblyReference.cache
-C:\Users\72457992B\Desktop\ERRESERBEN KUDEAKETA\TFG\Sistema Web para la Gestión de Reservas\obj\Debug\net8.0\Reservas.GeneratedMSBuildEditorConfig.editorconfig
-C:\Users\72457992B\Desktop\ERRESERBEN KUDEAKETA\TFG\Sistema Web para la Gestión de Reservas\obj\Debug\net8.0\Reservas.AssemblyInfoInputs.cache
-C:\Users\72457992B\Desktop\ERRESERBEN KUDEAKETA\TFG\Sistema Web para la Gestión de Reservas\obj\Debug\net8.0\Reservas.AssemblyInfo.cs
-C:\Users\72457992B\Desktop\ERRESERBEN KUDEAKETA\TFG\Sistema Web para la Gestión de Reservas\obj\Debug\net8.0\Reservas.csproj.CoreCompileInputs.cache
-C:\Users\72457992B\Desktop\ERRESERBEN KUDEAKETA\TFG\Sistema Web para la Gestión de Reservas\obj\Debug\net8.0\Reservas.MvcApplicationPartsAssemblyInfo.cs
-C:\Users\72457992B\Desktop\ERRESERBEN KUDEAKETA\TFG\Sistema Web para la Gestión de Reservas\obj\Debug\net8.0\Reservas.MvcApplicationPartsAssemblyInfo.cache
-C:\Users\72457992B\Desktop\ERRESERBEN KUDEAKETA\TFG\Sistema Web para la Gestión de Reservas\obj\Debug\net8.0\Reservas.RazorAssemblyInfo.cache
-C:\Users\72457992B\Desktop\ERRESERBEN KUDEAKETA\TFG\Sistema Web para la Gestión de Reservas\obj\Debug\net8.0\Reservas.RazorAssemblyInfo.cs
-C:\Users\72457992B\Desktop\ERRESERBEN KUDEAKETA\TFG\Sistema Web para la Gestión de Reservas\obj\Debug\net8.0\Reservas.sourcelink.json
+C:\Users\72457992B\Desktop\ERRESERBEN KUDEAKETA\TFG\Sistema Web para la Gestión de Reservas\obj\Debug\net8.0\rjimswa.dswa.cache.json
+C:\Users\72457992B\Desktop\ERRESERBEN KUDEAKETA\TFG\Sistema Web para la Gestión de Reservas\obj\Debug\net8.0\rjsmrazor.dswa.cache.json
+C:\Users\72457992B\Desktop\ERRESERBEN KUDEAKETA\TFG\Sistema Web para la Gestión de Reservas\obj\Debug\net8.0\rjsmcshtml.dswa.cache.json
 C:\Users\72457992B\Desktop\ERRESERBEN KUDEAKETA\TFG\Sistema Web para la Gestión de Reservas\obj\Debug\net8.0\scopedcss\Views\Shared\_Layout.cshtml.rz.scp.css
 C:\Users\72457992B\Desktop\ERRESERBEN KUDEAKETA\TFG\Sistema Web para la Gestión de Reservas\obj\Debug\net8.0\scopedcss\bundle\Reservas.styles.css
 C:\Users\72457992B\Desktop\ERRESERBEN KUDEAKETA\TFG\Sistema Web para la Gestión de Reservas\obj\Debug\net8.0\scopedcss\projectbundle\Reservas.bundle.scp.css
 C:\Users\72457992B\Desktop\ERRESERBEN KUDEAKETA\TFG\Sistema Web para la Gestión de Reservas\obj\Debug\net8.0\staticwebassets.build.json
+C:\Users\72457992B\Desktop\ERRESERBEN KUDEAKETA\TFG\Sistema Web para la Gestión de Reservas\obj\Debug\net8.0\staticwebassets.build.json.cache
 C:\Users\72457992B\Desktop\ERRESERBEN KUDEAKETA\TFG\Sistema Web para la Gestión de Reservas\obj\Debug\net8.0\staticwebassets.development.json
 C:\Users\72457992B\Desktop\ERRESERBEN KUDEAKETA\TFG\Sistema Web para la Gestión de Reservas\obj\Debug\net8.0\staticwebassets.build.endpoints.json
+C:\Users\72457992B\Desktop\ERRESERBEN KUDEAKETA\TFG\Sistema Web para la Gestión de Reservas\obj\Debug\net8.0\staticwebassets.upToDateCheck.txt
 C:\Users\72457992B\Desktop\ERRESERBEN KUDEAKETA\TFG\Sistema Web para la Gestión de Reservas\obj\Debug\net8.0\Reservas.csproj.Up2Date
 C:\Users\72457992B\Desktop\ERRESERBEN KUDEAKETA\TFG\Sistema Web para la Gestión de Reservas\obj\Debug\net8.0\Reservas.dll
 C:\Users\72457992B\Desktop\ERRESERBEN KUDEAKETA\TFG\Sistema Web para la Gestión de Reservas\obj\Debug\net8.0\refint\Reservas.dll
 C:\Users\72457992B\Desktop\ERRESERBEN KUDEAKETA\TFG\Sistema Web para la Gestión de Reservas\obj\Debug\net8.0\Reservas.pdb
 C:\Users\72457992B\Desktop\ERRESERBEN KUDEAKETA\TFG\Sistema Web para la Gestión de Reservas\obj\Debug\net8.0\Reservas.genruntimeconfig.cache
 C:\Users\72457992B\Desktop\ERRESERBEN KUDEAKETA\TFG\Sistema Web para la Gestión de Reservas\obj\Debug\net8.0\ref\Reservas.dll
-C:\Users\72457992B\Desktop\ERRESERBEN KUDEAKETA\TFG\Sistema Web para la Gestión de Reservas\obj\Debug\net8.0\rpswa.dswa.cache.json
-C:\Users\72457992B\Desktop\ERRESERBEN KUDEAKETA\TFG\Sistema Web para la Gestión de Reservas\obj\Debug\net8.0\rjimswa.dswa.cache.json
-C:\Users\72457992B\Desktop\ERRESERBEN KUDEAKETA\TFG\Sistema Web para la Gestión de Reservas\obj\Debug\net8.0\rjsmrazor.dswa.cache.json
-C:\Users\72457992B\Desktop\ERRESERBEN KUDEAKETA\TFG\Sistema Web para la Gestión de Reservas\obj\Debug\net8.0\rjsmcshtml.dswa.cache.json
-C:\Users\72457992B\Desktop\ERRESERBEN KUDEAKETA\TFG\Sistema Web para la Gestión de Reservas\obj\Debug\net8.0\staticwebassets.build.json.cache
-C:\Users\72457992B\Desktop\ERRESERBEN KUDEAKETA\TFG\Sistema Web para la Gestión de Reservas\obj\Debug\net8.0\staticwebassets.upToDateCheck.txt

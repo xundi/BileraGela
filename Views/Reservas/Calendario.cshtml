@@ -1,83 +1,250 @@
 ﻿@model Reservas.Models.CalendarioViewModel
-@using System.Text.Json
-
+@using Microsoft.AspNetCore.Mvc.Rendering
+@using Reservas.Models.ViewModels
 
 @{
     ViewData["Title"] = "Calendario de Reservas";
+
+    var centros = (ViewBag.Centros as IEnumerable<SelectListItem>) ?? Enumerable.Empty<SelectListItem>();
+    var tipos = (ViewBag.Tipos as IEnumerable<SelectListItem>) ?? Enumerable.Empty<SelectListItem>();
+    var recursos = (ViewBag.Recursos as IEnumerable<RecursoOptionVM>) ?? Enumerable.Empty<RecursoOptionVM>();
+
+    int? centroSel = ViewBag.CentroId as int?;
+    int? tipoSel = ViewBag.TipoId as int?;
+    int? recursoSel = ViewBag.RecursoId as int?;
 }
 
-<!-- FullCalendar CSS -->
-<link href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/main.min.css" rel="stylesheet" />
+<h2 class="mb-4">Calendario</h2>
 
-<!-- FullCalendar JS y Plugins -->
-<script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/main.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/daygrid.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/timegrid.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/list.min.js"></script>
-
-
-<div class="row">
-    <div class="col-md-3">
-        <h5>Recursos</h5>
-        <ul class="list-group">
-            @foreach (var recurso in Model.Recursos.GroupBy(r => r.Id).Select(g => g.First()))
+<div class="row g-3 mb-3">
+    <div class="col-md-4">
+        <label class="form-label">Centro</label>
+        <select id="selCentro" class="form-select" data-selected="@centroSel">
+            <option value="">— Selecciona —</option>
+            @foreach (var c in centros)
             {
-                <li class="list-group-item">
-                    <strong>@recurso.Center.NameSpanish</strong><br />
-                    @recurso.ResourceType.NameSpanish - @recurso.NameSpanish
-                </li>
+                <option value="@c.Value">@c.Text</option>
             }
-        </ul>
+        </select>
     </div>
 
-   <div class="col-md-9">
-    <div id="main-calendar"></div>
+    <div class="col-md-4">
+        <label class="form-label">Tipo de recurso</label>
+        <select id="selTipo" class="form-select" data-selected="@tipoSel">
+            <option value="">— Selecciona —</option>
+            @foreach (var t in tipos)
+            {
+                <option value="@t.Value">@t.Text</option>
+            }
+        </select>
+    </div>
+
+    <div class="col-md-4">
+        <label class="form-label">Recurso</label>
+        <select id="selRecurso" class="form-select" data-selected="@recursoSel">
+            <option value="">— Selecciona —</option>
+            @foreach (var r in recursos)
+            {
+                <option value="@r.Value" data-centro="@r.CenterId" data-tipo="@r.ResourceTypeId">
+                    @r.Text
+                </option>
+            }
+        </select>
+    </div>
 </div>
 
-</div>
+<div id="calendar"></div>
+
+<link href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.15/index.global.min.css" rel="stylesheet" />
+
 <style>
-    #main-calendar {
-        min-height: 600px;
+    /* Botones azules estilo Osakidetza */
+    .fc .fc-button {
+        background: linear-gradient(135deg, #004494, #005bb5);
+        border: none;
+        color: #fff;
+        font-weight: 500;
+        font-size: .95rem;
+        border-radius: 8px;
+        padding: .5rem 1rem;
+        transition: all .2s ease-in-out;
+        box-shadow: 0 2px 5px rgba(0,0,0,.15);
     }
+
+        .fc .fc-button:hover {
+            background: linear-gradient(135deg, #005bb5, #0077e6);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 10px rgba(0,0,0,.25);
+        }
+
+        .fc .fc-button.fc-button-active {
+            background: linear-gradient(135deg, #003366, #004080);
+            color: #fff;
+            box-shadow: inset 0 2px 6px rgba(0,0,0,.3);
+            transform: none;
+        }
+
+    .fc .fc-today-button {
+        background: linear-gradient(135deg, #0066cc, #004494);
+        border: none;
+        color: #fff;
+    }
+
+        .fc .fc-today-button:hover {
+            background: linear-gradient(135deg, #0077e6, #005bb5);
+        }
 </style>
 
+<script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.15/index.global.min.js"></script>
 
 @section Scripts {
     <script>
-        document.addEventListener('DOMContentLoaded', function () {
-            var calendarEl = document.getElementById('main-calendar');
+        (function () {
+          const selCentro  = document.getElementById('selCentro');
+          const selTipo    = document.getElementById('selTipo');
+          const selRecurso = document.getElementById('selRecurso');
 
-            var calendar = new FullCalendar.Calendar(calendarEl, {
-                initialView: 'timeGridWeek',
-                headerToolbar: {
-                    left: 'prev,next today',
-                    center: 'title',
-                    right: 'dayGridMonth,timeGridWeek,timeGridDay,listWeek'
-                },
-                locale: 'es', // para español
-                firstDay: 1, // lunes
-                slotMinTime: "07:00:00",
-                slotMaxTime: "22:00:00",
-                @using System.Text.Json
+          // Preselección si vino por querystring/ruta
+          if (selCentro.dataset.selected)  selCentro.value  = selCentro.dataset.selected;
+          if (selTipo.dataset.selected)    selTipo.value    = selTipo.dataset.selected;
+          if (selRecurso.dataset.selected) selRecurso.value = selRecurso.dataset.selected;
 
-events: @Html.Raw(JsonSerializer.Serialize(
-    Model.Reservas.Select(reserva => new {
-        title = reserva.Resource?.NameSpanish,
-        start = reserva.FechaInicio.ToString("s"),
-        end = reserva.FechaFin.ToString("s"),
-        color = reserva.Estado == "Confirmada" ? "green" :
-                reserva.Estado == "Pendiente" ? "orange" : "red"
-    })
-))
+          // 1) Filtra TIPOS por CENTRO (usando los recursos como "fuente de verdad")
+          function filtrarTiposPorCentro() {
+            const c = selCentro.value;
+            const tiposVisibles = new Set();
 
-            }
-        ]
+            [...selRecurso.options].forEach(opt => {
+              if (!opt.value) return;
+              if (!c || opt.dataset.centro === c) tiposVisibles.add(opt.dataset.tipo);
+            });
 
-))
+            let firstVisible = "";
+            [...selTipo.options].forEach(opt => {
+              if (!opt.value) return;
+              const visible = !c || tiposVisibles.has(opt.value);
+              opt.style.display = visible ? "" : "none";
+              if (visible && !firstVisible) firstVisible = opt.value;
+            });
 
+            const sel = selTipo.selectedOptions[0];
+            if (!sel || sel.style.display === "none") selTipo.value = firstVisible || "";
+          }
+
+          // 2) Filtra RECURSOS por (CENTRO,TIPO)
+          function filtrarRecursos() {
+            const c = selCentro.value;
+            const t = selTipo.value;
+            let firstVisibleValue = "";
+
+            [...selRecurso.options].forEach(opt => {
+              if (!opt.value) return;
+              const ok = (!c || opt.dataset.centro === c) && (!t || opt.dataset.tipo === t);
+              opt.style.display = ok ? "" : "none";
+              if (ok && !firstVisibleValue) firstVisibleValue = opt.value;
+            });
+
+            const selOpt = selRecurso.selectedOptions[0];
+            if (!selOpt || selOpt.style.display === "none") selRecurso.value = firstVisibleValue || "";
+          }
+
+          // Encadenado correcto
+          function onCentroChange() {
+            filtrarTiposPorCentro();  // primero tipos
+            filtrarRecursos();        // luego recursos
+            cargarCalendario();
+          }
+          function onTipoChange() {
+            filtrarRecursos();
+            cargarCalendario();
+          }
+
+          selCentro.addEventListener('change', onCentroChange);
+          selTipo.addEventListener('change',   onTipoChange);
+          selRecurso.addEventListener('change', cargarCalendario);
+
+          // --- FullCalendar ---
+          let calendar;
+          function cargarCalendario() {
+            const recursoId = selRecurso.value;
+            if (!recursoId) { if (calendar) calendar.destroy(); return; }
+
+            const el = document.getElementById('calendar');
+            if (calendar) calendar.destroy();
+
+            calendar = new FullCalendar.Calendar(el, {
+              initialView: 'timeGridWeek',
+              slotMinTime: '07:00:00',
+              slotMaxTime: '22:00:00',
+              slotDuration: '00:30:00',
+              allDaySlot: false,
+              height: 'auto',
+              locale: 'es',
+              firstDay: 1,
+              nowIndicator: true,
+              headerToolbar: {
+                left: 'prev,next today',
+                center: 'title',
+                right: 'dayGridMonth,timeGridWeek,timeGridDay,listWeek'
+              },
+              buttonText: {
+                today: 'Hoy',
+                month: 'Mes',
+                week: 'Semana',
+                day: 'Día',
+                list: 'Agenda'
+              },
+
+              // Selección para crear reserva
+              selectable: true,
+              selectMirror: true,
+              unselectAuto: true,
+              selectAllow: function (info) {
+                const min = 30 * 60 * 1000;
+                return (info.end - info.start) >= min;
+              },
+              select: function(info) {
+                const recursoId = selRecurso.value;
+                if (!recursoId) { alert("Selecciona primero un recurso."); return; }
+                if (info.start.toDateString() !== info.end.toDateString()) {
+                  alert("La reserva debe ser dentro del mismo día.");
+                  return;
+                }
+                const base = '@Url.Action("Create", "Reservas")';
+                const params = new URLSearchParams({
+                  recursoId: recursoId,
+                  centroId: selCentro.value || "",
+                  tipoId: selTipo.value || "",
+                  inicio: info.start.toISOString(),
+                  fin: info.end.toISOString()
+                });
+                window.location.href = `${base}?${params.toString()}`;
+              },
+
+              // Cargar eventos de servidor
+              events: function(info, success, failure) {
+                const recursoId = selRecurso.value;
+                if (!recursoId) { success([]); return; }
+                const base = '@Url.Action("CalendarioEventos", "Reservas")';
+                const url  = `${base}?recursoId=${encodeURIComponent(recursoId)}&start=${info.start.toISOString()}&end=${info.end.toISOString()}`;
+                fetch(url, { cache: "no-store" })
+                  .then(r => { if (!r.ok) throw new Error(`${r.status} ${r.statusText}`); return r.json(); })
+                  .then(data => success(data))
+                  .catch(err => { console.error(err); failure(err); });
+              },
+
+              eventTimeFormat: { hour: '2-digit', minute: '2-digit' },
+              eventClick: function(info) {
+                const e = info.event;
+                alert(`Reserva: ${e.title}\nInicio: ${e.start.toLocaleString()}\nFin: ${e.end ? e.end.toLocaleString() : ''}`);
+              }
             });
 
             calendar.render();
-        });
+          }
+
+          // Carga inicial
+          onCentroChange();
+        })();
     </script>
 }

@@ -4,6 +4,10 @@ using Microsoft.EntityFrameworkCore;
 using Reservas.Context;
 using Reservas.Models;
 using System.Security.Claims;
+using Reservas.Models.ViewModels;
+
+
+
 
 
 namespace Reservas.Controllers
@@ -17,26 +21,68 @@ namespace Reservas.Controllers
             _context = context;
         }
 
-        // GET: ReservasController
-        public IActionResult Calendario()
+
+        // GET: /Reservas/Calendario
+        [HttpGet]
+        public async Task<IActionResult> Calendario(int? centroId, int? tipoId, int? recursoId)
         {
-            var recursos = _context.Resources
-                .Include(r => r.Center)
-                .Include(r => r.ResourceType)
-                .ToList();
+            ViewBag.Centros = await _context.Centers
+                .Select(c => new SelectListItem { Value = c.Id.ToString(), Text = c.NameSpanish })
+                .ToListAsync();
 
-            var reservas = _context.Bookings
-                .Include(r => r.Resource)
-                .ToList();
+            ViewBag.Tipos = await _context.ResourceTypes
+                .Select(t => new SelectListItem { Value = t.Id.ToString(), Text = t.NameSpanish })
+                .ToListAsync();
 
-            var viewModel = new CalendarioViewModel
-            {
-                Recursos = recursos,
-                Reservas = reservas
-            };
+            ViewBag.Recursos = await _context.Resources
+                .Select(r => new RecursoOptionVM
+                {
+                    Value = r.Id.ToString(),
+                    Text = r.NameSpanish,
+                    CenterId = r.CenterId,
+                    ResourceTypeId = r.ResourceTypeId
+                })
+                .ToListAsync();
 
-            return View(viewModel);
+
+
+
+            ViewBag.CentroId = centroId;
+            ViewBag.TipoId = tipoId;
+            ViewBag.RecursoId = recursoId;
+
+            return View(); // <-- SOLO vista aquí
         }
+
+        // GET: /Reservas/CalendarioEventos?recursoId=12&start=...&end=...
+        [HttpGet]
+        public async Task<IActionResult> CalendarioEventos(int recursoId, DateTime start, DateTime end)
+        {
+            // Normaliza UTC → Local para comparar con fechas guardadas en BD
+            var startLocal = (start.Kind == DateTimeKind.Utc) ? start.ToLocalTime() : start;
+            var endLocal = (end.Kind == DateTimeKind.Utc) ? end.ToLocalTime() : end;
+
+            var eventos = await _context.Bookings
+                .Where(b => b.ResourceId == recursoId &&
+                            b.FechaInicio < endLocal &&
+                            b.FechaFin > startLocal)
+                .Select(b => new
+                {
+                    id = b.Id,
+                    title = b.Usuario ?? "Reserva",
+                    // Devuelve ISO sin zona para evitar desfases
+                    start = b.FechaInicio.ToString("yyyy-MM-ddTHH:mm:ss"),
+                    end = b.FechaFin.ToString("yyyy-MM-ddTHH:mm:ss"),
+                    color = b.Estado == "Aprobada" ? "#7ED957"
+                          : b.Estado == "Pendiente" ? "#86B7FE"
+                          : "#FF9AA2"
+                })
+                .ToListAsync();
+
+            return Json(eventos);
+        }
+
+
 
         // GET: ReservasController/SeleccionarTipo
         [HttpGet]
@@ -87,7 +133,7 @@ namespace Reservas.Controllers
 
         // GET: Reservas/Create
         [HttpGet]
-        public async Task<IActionResult> Create(int? centroId, int? tipoId, int? recursoId)
+        public async Task<IActionResult> Create(int? centroId, int? tipoId, int? recursoId, DateTime? inicio, DateTime? fin)
         {
             if (recursoId == null)
             {
@@ -103,19 +149,28 @@ namespace Reservas.Controllers
             if (recurso == null)
                 return NotFound();
 
-            // ✅ Define 'ahora' antes del objeto
             var ahora = DateTime.Now.AddMinutes(1);
+
+            // ✅ Si llegan por querystring, úsalos; si no, pon valores por defecto
+            var start = inicio.HasValue
+                ? (inicio.Value.Kind == DateTimeKind.Utc ? inicio.Value.ToLocalTime() : inicio.Value)
+                : ahora;
+
+            var end = fin.HasValue
+                ? (fin.Value.Kind == DateTimeKind.Utc ? fin.Value.ToLocalTime() : fin.Value)
+                : start.AddHours(1);
 
             var booking = new Booking
             {
                 ResourceId = recurso.Id,
                 Sala = recurso.NameSpanish,
-                FechaInicio = ahora,
-                FechaFin = ahora.AddHours(1)
+                FechaInicio = start,
+                FechaFin = end
             };
 
             return View(booking);
         }
+
 
 
 
@@ -150,13 +205,13 @@ namespace Reservas.Controllers
 
             booking.UserId = usuario.Id;
 
-            if (booking.FechaInicio < DateTime.Now)
+            if (booking.FechaInicio <= DateTime.Now)
             {
                 ModelState.AddModelError("FechaInicio", "❌ La fecha de inicio no puede ser anterior al momento actual.");
                 return View(booking);
             }
 
-            if (booking.FechaFin <= booking.FechaInicio)
+            if (booking.FechaFin < booking.FechaInicio.AddMinutes(30))
             {
                 ModelState.AddModelError("FechaFin", "❌ La fecha de fin debe ser posterior a la de inicio.");
                 return View(booking);
