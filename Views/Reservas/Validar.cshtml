@@ -41,11 +41,53 @@ else
                     <form asp-action="ValidarReserva" method="post" class="d-inline">
                         <input type="hidden" name="id" value="@reserva.Id" />
                         <input type="hidden" name="accion" value="rechazar" />
-                        <button type="submit" class="btn btn-danger btn-sm">❌ Rechazar</button>
+                         <button type="button"
+                            class="btn btn-danger"
+                            data-bs-toggle="modal"
+                            data-bs-target="#modalRechazo"
+                            data-id="@reserva.Id">
+                      ❌ Rechazar
+                    </button>
                     </form>
                 </td>
             </tr>
         }
         </tbody>
     </table>
+}
+
+                        <div class="modal fade" id="modalRechazo" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog">
+    <form asp-action="ValidarReserva" method="post" class="modal-content">
+      @Html.AntiForgeryToken()
+      <input type="hidden" name="id" id="rechazo-id" />
+      <input type="hidden" name="accion" value="rechazar" />
+
+      <div class="modal-header bg-danger text-white">
+        <h5 class="modal-title">Rechazar reserva</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+
+      <div class="modal-body">
+        <label class="form-label">Motivo del rechazo (obligatorio)</label>
+        <textarea name="motivo" class="form-control" rows="4" required></textarea>
+      </div>
+
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+        <button type="submit" class="btn btn-danger">Rechazar</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+@section Scripts{
+<script>
+  const modal = document.getElementById('modalRechazo');
+  modal.addEventListener('show.bs.modal', function (ev) {
+    const btn = ev.relatedTarget;
+    const id = btn.getAttribute('data-id');
+    document.getElementById('rechazo-id').value = id;
+  });
+</script>
 }

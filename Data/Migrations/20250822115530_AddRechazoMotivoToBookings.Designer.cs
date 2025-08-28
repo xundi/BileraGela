@@ -3,17 +3,20 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Reservas.Context;
 
 #nullable disable
 
-namespace Reservas.Migrations
+namespace Reservas.Data.Migrations
 {
     [DbContext(typeof(BDContext))]
-    partial class BDContextModelSnapshot : ModelSnapshot
+    [Migration("20250822115530_AddRechazoMotivoToBookings")]
+    partial class AddRechazoMotivoToBookings
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -42,6 +45,10 @@ namespace Reservas.Migrations
 
                     b.Property<DateTime>("FechaInicio")
                         .HasColumnType("datetime(6)");
+
+                    b.Property<string>("RechazoMotivo")
+                        .HasMaxLength(1000)
+                        .HasColumnType("varchar(1000)");
 
                     b.Property<int>("ResourceId")
                         .HasColumnType("int");
@@ -154,11 +161,6 @@ namespace Reservas.Migrations
                     b.Property<string>("Dni")
                         .IsRequired()
                         .HasColumnType("longtext");
-
-                    b.Property<string>("Email")
-                        .IsRequired()
-                        .HasMaxLength(255)
-                        .HasColumnType("varchar(255)");
 
                     b.Property<int>("UserTypeId")
                         .HasColumnType("int");

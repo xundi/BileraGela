@@ -1,127 +1,33 @@
-﻿@model Reservas.Models.Booking
-
+﻿@model Reservas.Models.ViewModels.ReservaViewModel
 @{
-    ViewData["Title"] = "Nueva Reserva";
+    ViewData["Title"] = "Nueva reserva";
 }
 
-<h2 class="text-center mt-4 mb-4 text-primary">Nueva Reserva</h2>
+<h2>@ViewData["Title"]</h2>
 
-<p class="text-muted"><strong>Recurso:</strong> @Model.Sala</p>
-
-<form id="formReserva" asp-action="Create" method="post">
+<form asp-action="Create" method="post">
     @Html.AntiForgeryToken()
-    <input type="hidden" asp-for="ResourceId" />
 
-    <div asp-validation-summary="All" class="text-danger"></div>
+    <input type="hidden" asp-for="CentroId" />
+    <input type="hidden" asp-for="TipoId" />
+    <input type="hidden" asp-for="RecursoId" />
 
     <div class="mb-3">
-        <label for="FechaInicio" class="form-label">Fecha Inicio</label>
-
-        <input asp-for="FechaInicio" type="datetime-local" class="form-control" id="FechaInicio"
-               value="@((Model.FechaInicio == DateTime.MinValue ? DateTime.Now : Model.FechaInicio).ToString("yyyy-MM-ddTHH:mm"))" />
+        <label asp-for="FechaInicio" class="form-label"></label>
+        <input asp-for="FechaInicio" class="form-control" type="datetime-local" />
         <span asp-validation-for="FechaInicio" class="text-danger"></span>
     </div>
 
-    <div class="mb-4">
-        <label for="FechaFin" class="form-label">Fecha Fin</label>
-
-        <input asp-for="FechaFin" type="datetime-local" class="form-control" id="FechaFin"
-               value="@((Model.FechaFin == DateTime.MinValue ? DateTime.Now.AddHours(1) : Model.FechaFin).ToString("yyyy-MM-ddTHH:mm"))" />
+    <div class="mb-3">
+        <label asp-for="FechaFin" class="form-label"></label>
+        <input asp-for="FechaFin" class="form-control" type="datetime-local" />
         <span asp-validation-for="FechaFin" class="text-danger"></span>
     </div>
 
-    <div class="text-center mt-4">
-        <button type="button" class="btn btn-success" onclick="mostrarModalConfirmacion()">Continuar</button>
-        <a asp-action="Index" class="btn btn-secondary ms-2">Cancelar</a>
-    </div>
-
-    <!-- Modal de confirmación -->
-    <div class="modal fade" id="modalConfirmacion" tabindex="-1" aria-labelledby="modalLabel" aria-hidden="true">
-        <div class="modal-dialog">
-            <div class="modal-content">
-                <div class="modal-header bg-primary text-white">
-                    <h5 class="modal-title" id="modalLabel">Confirmar reserva</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
-                </div>
-                <div class="modal-body">
-                    <p><strong>Recurso:</strong> <span id="resumen-recurso">@Model.Sala</span></p>
-                    <p><strong>Inicio:</strong> <span id="resumen-inicio"></span></p>
-                    <p><strong>Fin:</strong> <span id="resumen-fin"></span></p>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-                    <button type="submit" class="btn btn-primary">Confirmar y guardar</button>
-                </div>
-            </div>
-        </div>
-    </div>
+    <button type="submit" class="btn btn-primary">Guardar</button>
+    <a asp-action="MisReservas" class="btn btn-secondary">Cancelar</a>
 </form>
 
 @section Scripts {
-    <partial name="_ValidationScriptsPartial" />
-    <script>
-        (function () {
-          const inicio = document.getElementById("FechaInicio");
-          const fin    = document.getElementById("FechaFin");
-
-          const pad = n => String(n).padStart(2, "0");
-          const toLocalInput = d =>
-            `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
-
-          // Establece mínimos razonables al cargar
-          (function setMinsNow(){
-            const now = new Date();
-            const nowStr = toLocalInput(now);
-            if (!inicio.min) inicio.min = nowStr;
-            if (!fin.min)    fin.min    = toLocalInput(new Date(now.getTime() + 30*60000));
-          })();
-
-          // 👉 Solo exigimos Fin >= Inicio + 30 min (SIN limitar el día)
-          function enforceMin30() {
-            if (!inicio.value) return;
-            const s = new Date(inicio.value);
-            if (isNaN(s)) return;
-
-            const minEnd = new Date(s.getTime() + 30 * 60000);
-            fin.min = toLocalInput(minEnd);   // ✅ actualiza el mínimo
-
-            const f = new Date(fin.value);
-            if (isNaN(f) || f < minEnd) {
-              fin.value = toLocalInput(minEnd); // ajusta si quedó por debajo
-            }
-
-            // ❌ NO ponemos fin.max => puedes cambiar de día libremente
-          }
-
-          inicio.addEventListener("change", enforceMin30);
-          inicio.addEventListener("input",  enforceMin30);
-          enforceMin30();
-
-          // --- Modal + validaciones cliente ---
-          window.mostrarModalConfirmacion = function () {
-            const vIni = inicio.value, vFin = fin.value;
-            if (!vIni || !vFin) { alert("⚠️ Debes completar ambas fechas."); return; }
-
-            const ini   = new Date(vIni);
-            const end   = new Date(vFin);
-            const ahora = new Date();
-
-            if (ini < ahora) { alert("⚠️ La fecha de inicio no puede estar en el pasado."); return; }
-
-            // ❌ Quitamos restricción de 'mismo día'
-            if (end < new Date(ini.getTime() + 30 * 60000)) {
-              alert("⚠️ La fecha de fin debe ser al menos 30 minutos posterior a la de inicio.");
-              return;
-            }
-
-            const fmt = d => d.toLocaleString("es-ES",
-              { day:"2-digit", month:"2-digit", year:"numeric", hour:"2-digit", minute:"2-digit" });
-
-            document.getElementById("resumen-inicio").textContent = fmt(ini);
-            document.getElementById("resumen-fin").textContent    = fmt(end);
-
-            new bootstrap.Modal(document.getElementById('modalConfirmacion')).show();
-          };
-        })();
-    </script>
+    @{ await Html.RenderPartialAsync("_ValidationScriptsPartial"); }
 }

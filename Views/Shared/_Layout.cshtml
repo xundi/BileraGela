@@ -19,6 +19,9 @@
     @* <link rel="stylesheet" href="~/WebApplication11.styles.css" asp-append-version="true" /> *@
 
 </head>
+
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
 <body>
     <header>
         <nav class="navbar navbar-expand-sm navbar-toggleable-sm navbar-light bg-white border-bottom box-shadow mb-3">
@@ -59,24 +62,22 @@
                             }
 
                             @* 👨‍🏫 DOCENTE *@
-                            else if (tipoUsuario == 2)
-                            {
-                                <li class="nav-item">
-                                    <a class="nav-link text-dark"
-                                       asp-controller="Reservas"
-                                       asp-action="Create"
-                                       asp-route-centroId="1"
-                                       asp-route-tipoId="1"
-                                       asp-route-recursoId="4">
-                                        ➕ Hacer reserva
-                                    </a>
-                                </li>
+                           else if (tipoUsuario == 2)
+                                {
+                                    @*
+                                    <li class="nav-item">
+                                        <a class="nav-link text-dark"
+                                           asp-controller="Reservas"
+                                           asp-action="Create"
+                                           asp-route-centroId="1"
+                                           asp-route-tipoId="1"
+                                           asp-route-recursoId="4">
+                                            ➕ Hacer reserva
+                                        </a>
+                                    </li>
+                                    *@
+                                }
 
-                                @*  
-                                <li class="nav-item">
-                                    <a class="nav-link text-dark" asp-controller="Reservas" asp-action="Calendario">Calendario</a>
-                                </li>*@
-                            }
 
                             @* 👤 USUARIO NORMAL *@
                             else if (tipoUsuario == 1)
@@ -85,19 +86,22 @@
                                 <li class="nav-item">
                                     <a class="nav-link text-dark" asp-controller="Resource" asp-action="Index">🧰 Ver Recursos</a>
                                 </li>
-                                <li class="nav-item">
+
+                               @* <li class="nav-item">
                                     <a class="nav-link text-dark"
                                        asp-controller="Home"
                                        asp-action="Panel">➕ Hacer reserva</a>
+                                </li>*@
 
-                                </li>
-                                <li class="nav-item">
-                                <a asp-controller="Reservas" asp-action="MisReservas" class="nav-link text-dark">📂 Mis reservas</a>
-                                </li>
                                 <li class="nav-item">
                                     <a class="nav-link text-dark" asp-controller="Reservas" asp-action="Calendario">📅 Calendario</a>
                                 </li>
-                            }
+
+                                <li class="nav-item">
+                                <a asp-controller="Reservas" asp-action="MisReservas" class="nav-link text-dark">📂 Mis reservas</a>
+                                </li>
+
+                                                          }
                         </ul>
                     }
 

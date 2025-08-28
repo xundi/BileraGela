@@ -25,20 +25,41 @@ namespace Reservas.Context
         {
             base.OnModelCreating(modelBuilder);
 
-            modelBuilder.Entity<Resource>()
-                .HasOne(r => r.Center)
-                .WithMany(c => c.Resources)
-                .HasForeignKey(r => r.CenterId);
+            // User (obligatorio)
+            modelBuilder.Entity<ResourceValidator>()
+                .HasOne(rv => rv.User)
+                .WithMany()
+                .HasForeignKey(rv => rv.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
 
-            modelBuilder.Entity<Resource>()
-                .HasOne(r => r.ResourceType)
-                .WithMany(rt => rt.Resources)
-                .HasForeignKey(r => r.ResourceTypeId);
+            // Center (opcional)
+            modelBuilder.Entity<ResourceValidator>()
+                .HasOne(rv => rv.Center)
+                .WithMany()
+                .HasForeignKey(rv => rv.CenterId)
+                .OnDelete(DeleteBehavior.Restrict);
 
-            modelBuilder.Entity<User>()
-                .HasOne(u => u.UserType)
-                .WithMany(ut => ut.Users)
-                .HasForeignKey(u => u.UserTypeId);
+            // Resource (opcional)
+            modelBuilder.Entity<ResourceValidator>()
+                .HasOne(rv => rv.Resource)
+                .WithMany()
+                .HasForeignKey(rv => rv.ResourceId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            // Índice único compuesto
+            modelBuilder.Entity<ResourceValidator>()
+                .HasIndex(rv => new { rv.UserId, rv.CenterId, rv.ResourceId })
+                .IsUnique();
+
+            // Check: al menos CenterId o ResourceId
+                modelBuilder.Entity<ResourceValidator>(entity =>
+                {
+                    entity.HasCheckConstraint(
+                        "CK_ResourceValidator_Target",
+                        "(CenterId IS NOT NULL) OR (ResourceId IS NOT NULL)");
+                });
+
+
         }
     }
 }

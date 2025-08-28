@@ -2,11 +2,21 @@
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.EntityFrameworkCore;
 using Reservas.Context;
+using Reservas.Models;
+using Reservas.Services;
+
 
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 builder.Services.AddControllersWithViews();
+
+// Configuración de EmailSettings desde appsettings.json
+builder.Services.Configure<EmailSettings>(builder.Configuration.GetSection("Email"));
+
+// Registrar el servicio de envío de correos
+builder.Services.AddSingleton<IEmailSender, MailKitEmailSender>();
+
 
 builder.Services.AddAntiforgery(options =>
 {

@@ -8,14 +8,17 @@ namespace Reservas.Models
 
         [Required(ErrorMessage = "El DNI es obligatorio.")]
         [RegularExpression(@"^[0-9]{8}[A-Za-z]$", ErrorMessage = "Formato de DNI no válido.")]
-        public string Dni { get; set;  }
+        public string Dni { get; set; } = string.Empty;
 
         [Required(ErrorMessage = "El tipo de usuario es obligatorio.")]
         public int UserTypeId { get; set; }
+        public UserType? UserType { get; set; }
 
-        public UserType? UserType { get; set; }  // <- Recomendación: Nullable si puede venir nulo
+        // 👇 NUEVO
+        [Required, EmailAddress]
+        [MaxLength(255)]
+        public string Email { get; set; } = string.Empty;
 
-        public ICollection<ResourceValidator> RecursosQueValida { get; set; }
-
+        public ICollection<ResourceValidator> RecursosQueValida { get; set; } = new List<ResourceValidator>();
     }
 }

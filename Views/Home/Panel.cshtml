@@ -1,150 +1,123 @@
-﻿@using Microsoft.AspNetCore.Http
-@using Reservas.Models
-
-@{
-    ViewData["Title"] = "Panel de usuario";
-    var tipoUsuario = Context.Session.GetInt32("UserTypeId") ?? 0;
-    var tipos = ViewBag.TiposRecurso as List<ResourceType>;
-    var ocultarBotonesInferiores = true;
+﻿@{
+    ViewData["Title"] = "Panel de Usuario";
 }
 
-@if (tipoUsuario != 1)
-{
-    <div class="alert alert-danger text-center mt-4">
-        No tienes permiso para acceder a esta página.
-    </div>
-}
-else
-{
-    <style>
-        .barra-superior {
-            height: 20px;
-            background: linear-gradient(to right, #00796B, #26A69A);
-            margin-bottom: 30px;
-        }
+<h2 class="text-center mt-4 mb-4 text-primary">Panel de Usuario</h2>
 
-        .btn-lg-custom {
-            padding: 20px;
-            font-size: 1.25rem;
-            width: 100%;
-        }
-
-        .panel-icon {
-            font-size: 2rem;
-            margin-right: 10px;
-        }
-    </style>
-
-    <div class="barra-superior"></div>
-
-    <div class="container mt-5">
-        <h1 class="text-center mb-4 text-primary">Panel de Usuario</h1>
-
-        <div class="row justify-content-center mb-4">
-            <div class="col-md-6">
-                <form asp-controller="Reservas" asp-action="Create" method="get">
-                    <div class="form-group">
-                        <label>Centro</label>
-                        <select id="centro" name="centroId" class="form-control" required>
-                            <option value="">-- Selecciona centro --</option>
-                            @foreach (var centro in ViewBag.Centros as SelectList)
-                            {
-                                <option value="@centro.Value">@centro.Text</option>
-                            }
-                        </select>
-                    </div>
-
-                    <div class="form-group mt-3">
-                        <label>Tipo de recurso</label>
-                        <select id="tipoRecurso" name="tipoId" class="form-control" required>
-                            <option value="">-- Primero selecciona centro --</option>
-                        </select>
-                    </div>
-
-                    <div class="form-group mt-3">
-                        <label>Recurso</label>
-                        <select id="recurso" name="recursoId" class="form-control" required>
-                            <option value="">-- Primero selecciona tipo de recurso --</option>
-                        </select>
-                    </div>
-
-                    <div class="text-center mt-4">
-                        <button type="submit" class="btn btn-info">Continuar con reserva</button>
-                    </div>
-                </form>
-
-            </div>
+<div class="mx-auto" style="max-width: 720px;">
+    <form id="panelForm" asp-controller="Reservas" asp-action="Create" method="get">
+        <div class="mb-3">
+            <label class="form-label">Centro</label>
+            <select id="centro" name="centroId" class="form-select" asp-items="ViewBag.Centros" required>
+                <option value="">-- Selecciona centro --</option>
+            </select>
         </div>
 
-        @if (!ocultarBotonesInferiores)
+        <div class="mb-3">
+            <label class="form-label">Tipo de recurso</label>
+            <select id="tipo" name="tipoId" class="form-select" required disabled>
+                <option value="">-- Primero selecciona centro --</option>
+            </select>
+        </div>
 
-        {
-            <div class="row row-cols-1 row-cols-md-2 g-4 justify-content-center">
-                <div class="col-md-4">
-                    <a class="btn btn-outline-success btn-lg-custom" asp-controller="Reservas" asp-action="Calendario">
-                        📅 Ver Calendario
-                    </a>
-                </div>
-                <div class="col-md-4">
-                    <a class="btn btn-outline-primary btn-lg-custom" asp-controller="Resource" asp-action="Index">
-                        🧰 Ver salas disponibles
-                    </a>
-                </div>
-                <div class="col-md-4">
-                    <a class="btn btn-outline-info btn-lg-custom" asp-controller="Reservas" asp-action="SeleccionarTipo">
-                        ➕ Hacer una reserva
-                    </a>
-                </div>
-                <div class="col-md-4">
-                    <a class="btn btn-outline-secondary btn-lg-custom" asp-controller="Reservas" asp-action="MisReservas">
-                        📂 Mis Reservas
-                    </a>
-                </div>
-                <div class="col-md-4">
-                    <a class="btn btn-outline-danger btn-lg-custom" asp-controller="Account" asp-action="Logout">
-                        🔓 Cerrar sesión
-                    </a>
-                </div>
-            </div>
-        }
+        <div class="mb-4">
+            <label class="form-label">Recurso</label>
+            <select id="recurso" name="recursoId" class="form-select" required disabled>
+                <option value="">-- Primero selecciona tipo de recurso --</option>
+            </select>
+        </div>
 
-    </div>
-}
+        <div class="text-center">
+            <button id="continuar" type="submit" class="btn btn-info" disabled>Continuar con reserva</button>
+        </div>
+    </form>
+</div>
 
 @section Scripts {
-    <script>
-        document.addEventListener('DOMContentLoaded', function () {
-            const centro = document.getElementById('centro');
-            const tipo = document.getElementById('tipoRecurso');
-            const recurso = document.getElementById('recurso');
+<script>
+(() => {
+  const selCentro  = document.getElementById('centro');
+  const selTipo    = document.getElementById('tipo');
+  const selRecurso = document.getElementById('recurso');
+  const btnCont    = document.getElementById('continuar');
+  const form       = document.getElementById('panelForm');
 
-            centro.addEventListener('change', function () {
-                tipo.innerHTML = '<option>Cargando tipos...</option>';
-                recurso.innerHTML = '<option>Selecciona tipo primero</option>';
+  // Helpers ----------------------------------------------------
+  const getJSON = async (url) => {
+    const res = await fetch(url, { cache: 'no-store' });
+    if (!res.ok) throw new Error('Error de red');
+    return res.json();
+  };
 
-                fetch(`/Home/GetTiposPorCentro?centroId=${this.value}`)
-                    .then(res => res.json())
-                    .then(data => {
-                        tipo.innerHTML = '<option value="">-- Selecciona tipo --</option>';
-                        data.forEach(t => {
-                            tipo.innerHTML += `<option value="${t.id}">${t.nombre}</option>`;
-                        });
-                    });
-            });
+  const resetSelect = (el, placeholder, disabled = true) => {
+    el.innerHTML = `<option value="">${placeholder}</option>`;
+    el.disabled = disabled;
+  };
 
-            tipo.addEventListener('change', function () {
-                recurso.innerHTML = '<option>Cargando recursos...</option>';
+  const resetAll = () => {
+    // Mantener las opciones de centro y solo limpiar su selección
+    selCentro.value = '';
+    resetSelect(selTipo, '-- Primero selecciona centro --', true);
+    resetSelect(selRecurso, '-- Primero selecciona tipo de recurso --', true);
+    btnCont.disabled = true;
+  };
 
-                fetch(`/Home/GetRecursosPorCentroYTipo?centroId=${centro.value}&tipoId=${this.value}`)
-                    .then(res => res.json())
-                    .then(data => {
-                        recurso.innerHTML = '<option value="">-- Selecciona recurso --</option>';
-                        data.forEach(r => {
-                            recurso.innerHTML += `<option value="${r.id}">${r.nombre}</option>`;
-                        });
-                    });
-            });
-        });
-    </script>
+  const cargarTipos = async (centroId) => {
+    if (!centroId) { resetSelect(selTipo, '-- Primero selecciona centro --', true); return; }
+    resetSelect(selTipo, 'Cargando tipos...', true);
+    resetSelect(selRecurso, '-- Primero selecciona tipo de recurso --', true);
+    const tipos = await getJSON(`/Home/GetTiposPorCentro?centroId=${centroId}`);
+    resetSelect(selTipo, '-- Selecciona tipo de recurso --', false);
+    tipos.forEach(t => {
+      const opt = document.createElement('option');
+      opt.value = t.id; opt.textContent = t.nombre;
+      selTipo.appendChild(opt);
+    });
+  };
+
+  const cargarRecursos = async (centroId, tipoId) => {
+    if (!centroId || !tipoId) { resetSelect(selRecurso, '-- Primero selecciona tipo de recurso --', true); return; }
+    resetSelect(selRecurso, 'Cargando recursos...', true);
+    const recursos = await getJSON(`/Home/GetRecursosPorCentroYTipo?centroId=${centroId}&tipoId=${tipoId}`);
+    resetSelect(selRecurso, '-- Selecciona recurso --', false);
+    recursos.forEach(r => {
+      const opt = document.createElement('option');
+      opt.value = r.id; opt.textContent = r.nombre;
+      selRecurso.appendChild(opt);
+    });
+  };
+
+  // Eventos ----------------------------------------------------
+  selCentro.addEventListener('change', async function () {
+    await cargarTipos(this.value);
+    resetSelect(selRecurso, '-- Primero selecciona tipo de recurso --', true);
+    btnCont.disabled = true;
+  });
+
+  selTipo.addEventListener('change', async function () {
+    await cargarRecursos(selCentro.value, this.value);
+    btnCont.disabled = true;
+  });
+
+  selRecurso.addEventListener('change', function () {
+    btnCont.disabled = !(selCentro.value && selTipo.value && selRecurso.value);
+  });
+
+  // Evitar enviar si falta algo (defensa extra)
+  form.addEventListener('submit', function (e) {
+    if (!(selCentro.value && selTipo.value && selRecurso.value)) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
+  });
+
+  // Siempre mostrar "Selecciona ..." al entrar o al volver atrás
+  document.addEventListener('DOMContentLoaded', resetAll);
+  // Al volver con botón atrás algunas veces el navegador restaura el estado desde caché (bfcache).
+  // Este evento nos permite re-inicializar también en ese caso.
+  window.addEventListener('pageshow', (e) => {
+    if (e.persisted) resetAll();
+  });
+})();
+</script>
 }
-

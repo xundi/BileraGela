@@ -1,416 +1,148 @@
 ﻿using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using Reservas.Context;
 using Reservas.Models;
-using System.Security.Claims;
 using Reservas.Models.ViewModels;
-
-
-
-
+using Reservas.Services;
+using System.Security.Claims;
 
 namespace Reservas.Controllers
 {
     public class ReservasController : Controller
     {
         private readonly BDContext _context;
+        private readonly IEmailSender _email;
 
-        public ReservasController(BDContext context)
+        public ReservasController(BDContext context, IEmailSender email)
         {
             _context = context;
+            _email = email;
         }
 
-
-        // GET: /Reservas/Calendario
+        // ===================== CREATE =====================
+        // GET: /Reservas/Create?centroId=1&tipoId=1&recursoId=10
         [HttpGet]
-        public async Task<IActionResult> Calendario(int? centroId, int? tipoId, int? recursoId)
+        public IActionResult Create(int? centroId, int? tipoId, int? recursoId)
         {
-            ViewBag.Centros = await _context.Centers
-                .Select(c => new SelectListItem { Value = c.Id.ToString(), Text = c.NameSpanish })
-                .ToListAsync();
-
-            ViewBag.Tipos = await _context.ResourceTypes
-                .Select(t => new SelectListItem { Value = t.Id.ToString(), Text = t.NameSpanish })
-                .ToListAsync();
-
-            ViewBag.Recursos = await _context.Resources
-                .Select(r => new RecursoOptionVM
-                {
-                    Value = r.Id.ToString(),
-                    Text = r.NameSpanish,
-                    CenterId = r.CenterId,
-                    ResourceTypeId = r.ResourceTypeId
-                })
-                .ToListAsync();
-
-
-
-
-            ViewBag.CentroId = centroId;
-            ViewBag.TipoId = tipoId;
-            ViewBag.RecursoId = recursoId;
-
-            return View(); // <-- SOLO vista aquí
-        }
-
-        // GET: /Reservas/CalendarioEventos?recursoId=12&start=...&end=...
-        [HttpGet]
-        public async Task<IActionResult> CalendarioEventos(int recursoId, DateTime start, DateTime end)
-        {
-            // Normaliza UTC → Local para comparar con fechas guardadas en BD
-            var startLocal = (start.Kind == DateTimeKind.Utc) ? start.ToLocalTime() : start;
-            var endLocal = (end.Kind == DateTimeKind.Utc) ? end.ToLocalTime() : end;
-
-            var eventos = await _context.Bookings
-                .Where(b => b.ResourceId == recursoId &&
-                            b.FechaInicio < endLocal &&
-                            b.FechaFin > startLocal)
-                .Select(b => new
-                {
-                    id = b.Id,
-                    title = b.Usuario ?? "Reserva",
-                    // Devuelve ISO sin zona para evitar desfases
-                    start = b.FechaInicio.ToString("yyyy-MM-ddTHH:mm:ss"),
-                    end = b.FechaFin.ToString("yyyy-MM-ddTHH:mm:ss"),
-                    color = b.Estado == "Aprobada" ? "#7ED957"
-                          : b.Estado == "Pendiente" ? "#86B7FE"
-                          : "#FF9AA2"
-                })
-                .ToListAsync();
-
-            return Json(eventos);
-        }
-
-
-
-        // GET: ReservasController/SeleccionarTipo
-        [HttpGet]
-        public async Task<IActionResult> SeleccionarTipo()
-        {
-            var tipos = await _context.ResourceTypes
-                .Select(t => new { t.Id, Nombre = t.NameSpanish })
-                .ToListAsync();
-
-            ViewBag.TiposRecurso = tipos;
-            return View();
-        }
-
-
-        // GET: ReservasController/ObtenerReservas
-        [HttpGet]
-        public async Task<IActionResult> ObtenerReservas()
-        {
-            var bookings = await _context.Bookings
-                .Include(b => b.Resource)
-                .Select(b => new
-                {
-                    id = b.Id,
-                    title = $"{b.Usuario} - {b.Resource.NameSpanish}",
-                    start = b.FechaInicio,
-                    end = b.FechaFin,
-                    color = b.Estado == "Confirmada" ? "green" :
-                            b.Estado == "Pendiente" ? "orange" : "red",
-                    usuario = b.Usuario,
-                    sala = b.Resource.NameSpanish,
-                    estado = b.Estado,
-                    fechaCreacion = b.FechaCreacion.ToString("yyyy-MM-dd HH:mm")
-                })
-                .ToListAsync();
-
-            return Json(bookings);
-        }
-
-        [HttpGet]
-        public async Task<IActionResult> SeleccionarRecurso()
-        {
-            var tipos = await _context.ResourceTypes.ToListAsync();
-            ViewBag.TiposRecurso = tipos;
-            return View();
-        }
-
-
-
-        // GET: Reservas/Create
-        [HttpGet]
-        public async Task<IActionResult> Create(int? centroId, int? tipoId, int? recursoId, DateTime? inicio, DateTime? fin)
-        {
-            if (recursoId == null)
+            var vm = new ReservaViewModel
             {
-                TempData["Error"] = "⚠️ Debes seleccionar un recurso válido.";
-                return RedirectToAction("SeleccionarRecurso");
-            }
-
-            var recurso = await _context.Resources
-                .Include(r => r.Center)
-                .Include(r => r.ResourceType)
-                .FirstOrDefaultAsync(r => r.Id == recursoId);
-
-            if (recurso == null)
-                return NotFound();
-
-            var ahora = DateTime.Now.AddMinutes(1);
-
-            // ✅ Si llegan por querystring, úsalos; si no, pon valores por defecto
-            var start = inicio.HasValue
-                ? (inicio.Value.Kind == DateTimeKind.Utc ? inicio.Value.ToLocalTime() : inicio.Value)
-                : ahora;
-
-            var end = fin.HasValue
-                ? (fin.Value.Kind == DateTimeKind.Utc ? fin.Value.ToLocalTime() : fin.Value)
-                : start.AddHours(1);
-
-            var booking = new Booking
-            {
-                ResourceId = recurso.Id,
-                Sala = recurso.NameSpanish,
-                FechaInicio = start,
-                FechaFin = end
+                CentroId = centroId,
+                TipoId = tipoId,
+                RecursoId = recursoId,
+                FechaInicio = DateTime.Now,
+                FechaFin = DateTime.Now.AddHours(1)
             };
-
-            return View(booking);
+            return View(vm);
         }
 
-
-
-
-
-
-
-
-
-        // POST: Crear reserva
+        // POST: /Reservas/Create
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create(Booking booking)
+        public async Task<IActionResult> Create(ReservaViewModel vm)
         {
-            ModelState.Remove("Resource");
-            ModelState.Remove("User");
-            ModelState.Remove("Sala");
-            ModelState.Remove("Usuario");
-
-            // ✅ Obtener ID del usuario autenticado por su DNI
-            var dniUsuario = User.Identity?.Name;
-            var usuario = await _context.Users.FirstOrDefaultAsync(u => u.Dni == dniUsuario);
-
-            if (usuario == null)
+            if (!ModelState.IsValid) return View(vm);
+            if (vm.RecursoId is null)
             {
-                ModelState.AddModelError("", "Usuario no encontrado");
-                var tipos = await _context.ResourceTypes
-                    .Select(t => new { t.Id, Nombre = t.NameSpanish })
-                    .ToListAsync();
-                ViewBag.TiposRecurso = new SelectList(tipos, "Id", "Nombre");
-                return View(booking);
+                ModelState.AddModelError(nameof(vm.RecursoId), "Falta seleccionar el recurso.");
+                return View(vm);
             }
 
-            booking.UserId = usuario.Id;
-
-            if (booking.FechaInicio <= DateTime.Now)
+            var userIdStr = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (!int.TryParse(userIdStr, out var userId))
             {
-                ModelState.AddModelError("FechaInicio", "❌ La fecha de inicio no puede ser anterior al momento actual.");
-                return View(booking);
+                ModelState.AddModelError("", "No se pudo identificar al usuario.");
+                return View(vm);
             }
 
-            if (booking.FechaFin < booking.FechaInicio.AddMinutes(30))
+            var reserva = new Booking
             {
-                ModelState.AddModelError("FechaFin", "❌ La fecha de fin debe ser posterior a la de inicio.");
-                return View(booking);
-            }
-
-
-            if (ModelState.IsValid)
-            {
-                booking.FechaCreacion = DateTime.Now;
-                booking.Estado = "Pendiente";
-                booking.Usuario = dniUsuario ?? "Desconocido";
-
-                var sala = await _context.Resources.FindAsync(booking.ResourceId);
-                booking.Sala = sala?.NameSpanish ?? "Desconocida";
-
-                // Validar solapamiento (NO permitir doble reserva misma sala/día/hora)
-                bool hayConflicto = await _context.Bookings.AnyAsync(b =>
-                    b.ResourceId == booking.ResourceId &&
-                    b.Id != booking.Id &&
-                    b.FechaInicio < booking.FechaFin &&
-                    b.FechaFin > booking.FechaInicio
-                );
-
-                if (hayConflicto)
-                {
-                    ModelState.AddModelError("", "❌ Ya existe una reserva para esta sala en ese horario.");
-                    return View(booking);
-                }
-
-
-                _context.Add(booking);
-                await _context.SaveChangesAsync();
-
-                TempData["Mensaje"] = " Reserva guardada con éxito.";
-
-
-                return RedirectToAction(nameof(MisReservas));
-            }
-
-            var tiposFallback = await _context.ResourceTypes
-                .Select(t => new { t.Id, Nombre = t.NameSpanish })
-                .ToListAsync();
-            ViewBag.TiposRecurso = new SelectList(tiposFallback, "Id", "Nombre");
-            return View(booking);
-        }
-
-
-
-
-
-        // GET: Reservas/MisReservas
-        [HttpGet]
-        public async Task<IActionResult> MisReservas(string sortOrder)
-        {
-            var dni = User.Identity?.Name;
-
-            // ViewBag para controlar orden actual en la vista
-            ViewBag.CurrentSort = sortOrder;
-            ViewBag.SortFechaInicio = String.IsNullOrEmpty(sortOrder) ? "fechainicio_desc" : "";
-            ViewBag.SortFechaCreacion = sortOrder == "fechacreacion" ? "fechacreacion_desc" : "fechacreacion";
-            ViewBag.SortEstado = sortOrder == "estado" ? "estado_desc" : "estado";
-            ViewBag.SortRecurso = sortOrder == "recurso" ? "recurso_desc" : "recurso";
-            ViewBag.SortTipo = sortOrder == "tipo" ? "tipo_desc" : "tipo";
-            ViewBag.SortCentro = sortOrder == "centro" ? "centro_desc" : "centro";
-            ViewBag.SortFin = sortOrder == "fechafin" ? "fechafin_desc" : "fechafin";
-
-            var reservas = _context.Bookings
-                .Include(b => b.Resource)
-                    .ThenInclude(r => r.ResourceType)
-                .Include(b => b.Resource.Center)
-                .Where(b => b.Usuario == dni);
-
-            // Orden dinámico
-            reservas = sortOrder switch
-            {
-                "fechainicio_desc" => reservas.OrderByDescending(r => r.FechaInicio),
-                "fechacreacion" => reservas.OrderBy(r => r.FechaCreacion),
-                "fechacreacion_desc" => reservas.OrderByDescending(r => r.FechaCreacion),
-                "estado" => reservas.OrderBy(r => r.Estado),
-                "estado_desc" => reservas.OrderByDescending(r => r.Estado),
-                "recurso" => reservas.OrderBy(r => r.Resource.NameSpanish),
-                "recurso_desc" => reservas.OrderByDescending(r => r.Resource.NameSpanish),
-                "tipo" => reservas.OrderBy(r => r.Resource.ResourceType.NameSpanish),
-                "tipo_desc" => reservas.OrderByDescending(r => r.Resource.ResourceType.NameSpanish),
-                "centro" => reservas.OrderBy(r => r.Resource.Center.NameSpanish),
-                "centro_desc" => reservas.OrderByDescending(r => r.Resource.Center.NameSpanish),
-                "fechafin" => reservas.OrderBy(r => r.FechaFin),
-                "fechafin_desc" => reservas.OrderByDescending(r => r.FechaFin),
-                _ => reservas.OrderByDescending(r => r.FechaCreacion), // ✅ orden por defecto actualizado
+                ResourceId = vm.RecursoId.Value,
+                UserId = userId,                     // UserId es int
+                FechaInicio = vm.FechaInicio,
+                FechaFin = vm.FechaFin,
+                Estado = "Pendiente",
+                FechaCreacion = DateTime.Now
             };
 
-            return View(await reservas.ToListAsync());
-        }
-
-        // GET: Reservas/Edit/5
-        [HttpGet]
-        public async Task<IActionResult> Edit(int id)
-        {
-            var booking = await _context.Bookings.FindAsync(id);
-            if (booking == null)
-                return NotFound();
-
-            return View(booking);
-        }
-
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(int id, Booking booking)
-        {
-            if (id != booking.Id)
-                return NotFound();
-
-            ModelState.Remove("Resource");
-            ModelState.Remove("User");
-            ModelState.Remove("Sala");
-            ModelState.Remove("Usuario");
-
-            if (booking.FechaFin <= booking.FechaInicio)
-            {
-                ModelState.AddModelError("", "❌ La fecha de fin no puede ser menor o igual a la de inicio.");
-                return View(booking);
-            }
-
-            try
-            {
-                var reservaExistente = await _context.Bookings.FindAsync(id);
-                if (reservaExistente == null)
-                    return NotFound();
-
-                reservaExistente.FechaInicio = booking.FechaInicio;
-                reservaExistente.FechaFin = booking.FechaFin;
-                reservaExistente.Estado = booking.Estado;
-
-                _context.Update(reservaExistente);
-                await _context.SaveChangesAsync();
-
-                TempData["Mensaje"] = "✅ Cambios guardados correctamente.";
-                return RedirectToAction("MisReservas"); // 👈 ESTA ES LA REDIRECCIÓN
-            }
-            catch (DbUpdateConcurrencyException)
-            {
-                if (!_context.Bookings.Any(e => e.Id == booking.Id))
-                    return NotFound();
-                else
-                    throw;
-            }
-        }
-
-        // GET: Reservas/Delete/5
-        [HttpGet] // ← ¡IMPORTANTE! Este atributo permite acceder desde el navegador
-        public async Task<IActionResult> Delete(int id)
-        {
-            var reserva = await _context.Bookings
-                .Include(b => b.Resource)
-                .FirstOrDefaultAsync(b => b.Id == id);
-
-            if (reserva == null)
-                return NotFound();
-
-            return View(reserva);
-        }
-
-        // POST: Reservas/Delete/5
-        [HttpPost, ActionName("Delete")]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> DeleteConfirmed(int id)
-        {
-            var booking = await _context.Bookings.FindAsync(id);
-            if (booking == null)
-                return NotFound();
-
-            _context.Bookings.Remove(booking);
+            _context.Bookings.Add(reserva);
             await _context.SaveChangesAsync();
 
-            TempData["Mensaje"] = "🗑️ Reserva eliminada correctamente.";
+            TempData["Mensaje"] = "✅ Reserva creada correctamente.";
+            TempData["TipoMensaje"] = "success";
             return RedirectToAction(nameof(MisReservas));
         }
 
-
-
-        // AJAX: Obtener salas por tipo
+        // ===================== MIS RESERVAS (con orden) =====================
         [HttpGet]
-        public async Task<IActionResult> GetSalasPorTipo(int tipoId)
+        public async Task<IActionResult> MisReservas(string? sortOrder)
         {
-            var salas = await _context.Resources
-                .Where(r => r.ResourceTypeId == tipoId)
-                .Select(r => new { id = r.Id, nombre = r.NameSpanish })
-                .ToListAsync();
+            var userIdStr = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (!int.TryParse(userIdStr, out var userId)) return Unauthorized();
 
-            return Json(salas);
+            IQueryable<Booking> query = _context.Bookings
+                .Include(b => b.Resource).ThenInclude(r => r.Center)
+                .Include(b => b.Resource).ThenInclude(r => r.ResourceType)
+                .Where(b => b.UserId == userId);
+
+            ViewBag.CurrentSort = string.IsNullOrEmpty(sortOrder) ? "fechainicio_desc" : sortOrder;
+
+            switch (sortOrder)
+            {
+                case "centro": query = query.OrderBy(b => b.Resource.Center.NameSpanish); break;
+                case "centro_desc": query = query.OrderByDescending(b => b.Resource.Center.NameSpanish); break;
+                case "recurso": query = query.OrderBy(b => b.Resource.NameSpanish); break;
+                case "recurso_desc": query = query.OrderByDescending(b => b.Resource.NameSpanish); break;
+                case "tipo": query = query.OrderBy(b => b.Resource.ResourceType.NameSpanish); break;
+                case "tipo_desc": query = query.OrderByDescending(b => b.Resource.ResourceType.NameSpanish); break;
+                case "fechainicio": query = query.OrderBy(b => b.FechaInicio); break;
+                case "fechainicio_desc": query = query.OrderByDescending(b => b.FechaInicio); break;
+                case "fechafin": query = query.OrderBy(b => b.FechaFin); break;
+                case "fechafin_desc": query = query.OrderByDescending(b => b.FechaFin); break;
+                case "estado": query = query.OrderBy(b => b.Estado); break;
+                case "estado_desc": query = query.OrderByDescending(b => b.Estado); break;
+                case "fechacreacion": query = query.OrderBy(b => b.FechaCreacion); break;
+                case "fechacreacion_desc": query = query.OrderByDescending(b => b.FechaCreacion); break;
+                default: query = query.OrderByDescending(b => b.FechaInicio); break;
+            }
+
+            var lista = await query.ToListAsync();
+            return View(lista);
         }
+
+        // ===================== DELETE (desde tu modal) =====================
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Delete(int id)
+        {
+            var userIdStr = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (!int.TryParse(userIdStr, out var userId)) return Unauthorized();
+
+            var reserva = await _context.Bookings
+                .FirstOrDefaultAsync(b => b.Id == id && b.UserId == userId);
+
+            if (reserva == null)
+            {
+                TempData["Mensaje"] = "No se encontró la reserva o no te pertenece.";
+                TempData["TipoMensaje"] = "danger";
+                return RedirectToAction(nameof(MisReservas));
+            }
+
+            _context.Bookings.Remove(reserva);
+            await _context.SaveChangesAsync();
+
+            TempData["Mensaje"] = "Reserva eliminada correctamente.";
+            TempData["TipoMensaje"] = "success";
+            return RedirectToAction(nameof(MisReservas));
+        }
+
+        // ===================== VALIDAR (validador) =====================
         [HttpGet]
         public async Task<IActionResult> Validar()
         {
             var dni = User.Identity?.Name;
 
             var usuario = await _context.Users.FirstOrDefaultAsync(u => u.Dni == dni);
-            if (usuario == null)
-                return Unauthorized();
+            if (usuario == null) return Unauthorized();
 
             var recursosAsignados = await _context.ResourceValidators
                 .Where(rv => rv.UserId == usuario.Id)
@@ -418,35 +150,92 @@ namespace Reservas.Controllers
                 .ToListAsync();
 
             var reservas = await _context.Bookings
-                .Include(b => b.Resource)
-                    .ThenInclude(r => r.Center)
+                .Include(b => b.Resource).ThenInclude(r => r.Center)
                 .Where(b => recursosAsignados.Contains(b.ResourceId))
                 .Where(b => b.Estado == "Pendiente")
                 .ToListAsync();
 
-            return View(reservas); // ⬅️ vista correspondiente
+            return View(reservas);
         }
+
+        // ===================== VALIDAR / RECHAZAR + EMAIL =====================
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> ValidarReserva(int id, string accion)
+        public async Task<IActionResult> ValidarReserva(int id, string accion, string? motivo)
         {
-            var reserva = await _context.Bookings.FindAsync(id);
-            if (reserva == null)
-                return NotFound();
+            var reserva = await _context.Bookings
+                .Include(b => b.User)
+                .Include(b => b.Resource)
+                .FirstOrDefaultAsync(b => b.Id == id);
+
+            if (reserva == null) return NotFound();
 
             if (accion == "validar")
+            {
                 reserva.Estado = "Confirmada";
+            }
             else if (accion == "rechazar")
+            {
+                if (string.IsNullOrWhiteSpace(motivo))
+                {
+                    TempData["Error"] = "Debes indicar un motivo de rechazo.";
+                    return RedirectToAction(nameof(Validar));
+                }
                 reserva.Estado = "Rechazada";
+            }
+            else
+            {
+                TempData["Error"] = "Acción no válida.";
+                return RedirectToAction(nameof(Validar));
+            }
 
             await _context.SaveChangesAsync();
-            TempData["Mensaje"] = $"✅ Reserva {(accion == "validar" ? "validada" : "rechazada")} con éxito.";
+
+            var destinatario = reserva.User?.Email;
+            if (!string.IsNullOrWhiteSpace(destinatario))
+            {
+                var sala = reserva.Resource?.NameSpanish ?? reserva.Sala ?? "Sala";
+                var fi = reserva.FechaInicio.ToString("dd/MM/yyyy HH:mm");
+                var ff = reserva.FechaFin.ToString("dd/MM/yyyy HH:mm");
+
+                string subject, body;
+                if (reserva.Estado == "Confirmada")
+                {
+                    subject = "✅ Reserva validada";
+                    body = $@"<h2>Reserva validada</h2>
+                              <p>Tu reserva ha sido <b>CONFIRMADA</b>.</p>
+                              <ul>
+                                <li><b>Sala:</b> {sala}</li>
+                                <li><b>Desde:</b> {fi}</li>
+                                <li><b>Hasta:</b> {ff}</li>
+                              </ul>";
+                }
+                else
+                {
+                    subject = "❌ Reserva rechazada";
+                    body = $@"<h2>Reserva rechazada</h2>
+                              <p>Tu reserva ha sido <b>RECHAZADA</b>.</p>
+                              <ul>
+                                <li><b>Sala:</b> {sala}</li>
+                                <li><b>Desde:</b> {fi}</li>
+                                <li><b>Hasta:</b> {ff}</li>
+                              </ul>
+                              {(string.IsNullOrWhiteSpace(motivo) ? "" : $"<p><b>Motivo:</b> {System.Net.WebUtility.HtmlEncode(motivo)}</p>")}";
+                }
+
+                try { await _email.SendAsync(destinatario, subject, body); }
+                catch { TempData["Error"] = "Se actualizó el estado, pero el email no pudo enviarse."; }
+            }
+            else
+            {
+                TempData["Error"] = "El usuario no tiene email configurado.";
+            }
+
+            TempData["Mensaje"] = reserva.Estado == "Confirmada"
+                ? "✅ Reserva validada y notificada."
+                : "❌ Reserva rechazada y notificada.";
+
             return RedirectToAction(nameof(Validar));
         }
-
-
     }
 }
-
-
-
