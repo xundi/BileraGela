@@ -55,6 +55,38 @@
 
 <div id="calendar"></div>
 
+<!-- Modal detalle de reserva -->
+<div class="modal fade" id="eventModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header bg-primary text-white">
+        <h5 class="modal-title">Detalle de reserva</h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <p><strong>Recurso:</strong> <span id="mRecurso"></span></p>
+        <p><strong>Inicio:</strong> <span id="mInicio"></span></p>
+        <p><strong>Fin:</strong> <span id="mFin"></span></p>
+        <p><strong>Estado:</strong> <span id="mEstado"></span></p>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Toast (avisos rápidos) -->
+<div class="position-fixed top-0 end-0 p-3" style="z-index: 1080">
+  <div id="msgToast" class="toast align-items-center text-bg-dark border-0" role="alert" aria-live="assertive" aria-atomic="true">
+    <div class="d-flex">
+      <div id="msgToastBody" class="toast-body"></div>
+      <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+    </div>
+  </div>
+</div>
+
+
 <link href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.15/index.global.min.css" rel="stylesheet" />
 
 <style>
@@ -98,153 +130,138 @@
 <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.15/index.global.min.js"></script>
 
 @section Scripts {
-    <script>
-        (function () {
-          const selCentro  = document.getElementById('selCentro');
-          const selTipo    = document.getElementById('selTipo');
-          const selRecurso = document.getElementById('selRecurso');
+<script>
+(function () {
+  const selCentro  = document.getElementById('selCentro');
+  const selTipo    = document.getElementById('selTipo');
+  const selRecurso = document.getElementById('selRecurso');
 
-          // Preselección si vino por querystring/ruta
-          if (selCentro.dataset.selected)  selCentro.value  = selCentro.dataset.selected;
-          if (selTipo.dataset.selected)    selTipo.value    = selTipo.dataset.selected;
-          if (selRecurso.dataset.selected) selRecurso.value = selRecurso.dataset.selected;
+  // helper: toast
+  function showToast(msg) {
+    document.getElementById('msgToastBody').textContent = msg;
+    new bootstrap.Toast(document.getElementById('msgToast'), { delay: 3000 }).show();
+  }
 
-          // 1) Filtra TIPOS por CENTRO (usando los recursos como "fuente de verdad")
-          function filtrarTiposPorCentro() {
-            const c = selCentro.value;
-            const tiposVisibles = new Set();
+  // Preselección
+  if (selCentro.dataset.selected)  selCentro.value  = selCentro.dataset.selected;
+  if (selTipo.dataset.selected)    selTipo.value    = selTipo.dataset.selected;
+  if (selRecurso.dataset.selected) selRecurso.value = selRecurso.dataset.selected;
 
-            [...selRecurso.options].forEach(opt => {
-              if (!opt.value) return;
-              if (!c || opt.dataset.centro === c) tiposVisibles.add(opt.dataset.tipo);
-            });
+  function filtrarTiposPorCentro() {
+    const c = selCentro.value;
+    const tiposVisibles = new Set();
+    [...selRecurso.options].forEach(opt => {
+      if (!opt.value) return;
+      if (!c || opt.dataset.centro === c) tiposVisibles.add(opt.dataset.tipo);
+    });
+    let firstVisible = "";
+    [...selTipo.options].forEach(opt => {
+      if (!opt.value) return;
+      const visible = !c || tiposVisibles.has(opt.value);
+      opt.style.display = visible ? "" : "none";
+      if (visible && !firstVisible) firstVisible = opt.value;
+    });
+    const sel = selTipo.selectedOptions[0];
+    if (!sel || sel.style.display === "none") selTipo.value = firstVisible || "";
+  }
 
-            let firstVisible = "";
-            [...selTipo.options].forEach(opt => {
-              if (!opt.value) return;
-              const visible = !c || tiposVisibles.has(opt.value);
-              opt.style.display = visible ? "" : "none";
-              if (visible && !firstVisible) firstVisible = opt.value;
-            });
+  function filtrarRecursos() {
+    const c = selCentro.value, t = selTipo.value;
+    let firstVisibleValue = "";
+    [...selRecurso.options].forEach(opt => {
+      if (!opt.value) return;
+      const ok = (!c || opt.dataset.centro === c) && (!t || opt.dataset.tipo === t);
+      opt.style.display = ok ? "" : "none";
+      if (ok && !firstVisibleValue) firstVisibleValue = opt.value;
+    });
+    const selOpt = selRecurso.selectedOptions[0];
+    if (!selOpt || selOpt.style.display === "none") selRecurso.value = firstVisibleValue || "";
+  }
 
-            const sel = selTipo.selectedOptions[0];
-            if (!sel || sel.style.display === "none") selTipo.value = firstVisible || "";
-          }
+  function onCentroChange() { filtrarTiposPorCentro(); filtrarRecursos(); cargarCalendario(); }
+  function onTipoChange()   { filtrarRecursos(); cargarCalendario(); }
 
-          // 2) Filtra RECURSOS por (CENTRO,TIPO)
-          function filtrarRecursos() {
-            const c = selCentro.value;
-            const t = selTipo.value;
-            let firstVisibleValue = "";
+  selCentro.addEventListener('change', onCentroChange);
+  selTipo.addEventListener('change',   onTipoChange);
+  selRecurso.addEventListener('change', cargarCalendario);
 
-            [...selRecurso.options].forEach(opt => {
-              if (!opt.value) return;
-              const ok = (!c || opt.dataset.centro === c) && (!t || opt.dataset.tipo === t);
-              opt.style.display = ok ? "" : "none";
-              if (ok && !firstVisibleValue) firstVisibleValue = opt.value;
-            });
+  // --- FullCalendar ---
+  let calendar;
+  function cargarCalendario() {
+    const recursoId = selRecurso.value;
+    if (!recursoId) { if (calendar) calendar.destroy(); return; }
 
-            const selOpt = selRecurso.selectedOptions[0];
-            if (!selOpt || selOpt.style.display === "none") selRecurso.value = firstVisibleValue || "";
-          }
+    const el = document.getElementById('calendar');
+    if (calendar) calendar.destroy();
 
-          // Encadenado correcto
-          function onCentroChange() {
-            filtrarTiposPorCentro();  // primero tipos
-            filtrarRecursos();        // luego recursos
-            cargarCalendario();
-          }
-          function onTipoChange() {
-            filtrarRecursos();
-            cargarCalendario();
-          }
+    calendar = new FullCalendar.Calendar(el, {
+      initialView: 'timeGridWeek',
+      slotMinTime: '07:00:00',
+      slotMaxTime: '22:00:00',
+      slotDuration: '00:30:00',
+      allDaySlot: false,
+      height: 'auto',
+      locale: 'es',
+      firstDay: 1,
+      nowIndicator: true,
+      headerToolbar: { left: 'prev,next today', center: 'title', right: 'dayGridMonth,timeGridWeek,timeGridDay,listWeek' },
+      buttonText: { today: 'Hoy', month: 'Mes', week: 'Semana', day: 'Día', list: 'Agenda' },
 
-          selCentro.addEventListener('change', onCentroChange);
-          selTipo.addEventListener('change',   onTipoChange);
-          selRecurso.addEventListener('change', cargarCalendario);
+      selectable: true,
+      selectMirror: true,
+      unselectAuto: true,
+      selectAllow: info => (info.end - info.start) >= 30 * 60 * 1000,
 
-          // --- FullCalendar ---
-          let calendar;
-          function cargarCalendario() {
-            const recursoId = selRecurso.value;
-            if (!recursoId) { if (calendar) calendar.destroy(); return; }
+      // Crear reserva desde selección
+      select: function(info) {
+        const recursoId = selRecurso.value;
+        if (!recursoId) { showToast("Selecciona primero un recurso."); return; }
+        if (info.start.toDateString() !== info.end.toDateString()) {
+          showToast("La reserva debe ser dentro del mismo día.");
+          return;
+        }
+        const base = '@Url.Action("Create", "Reservas")';
+        const params = new URLSearchParams({
+          recursoId: recursoId,
+          centroId: selCentro.value || "",
+          tipoId: selTipo.value || "",
+          inicio: info.start.toISOString(),
+          fin: info.end.toISOString()
+        });
+        window.location.href = `${base}?${params.toString()}`;
+      },
 
-            const el = document.getElementById('calendar');
-            if (calendar) calendar.destroy();
+      // Carga de eventos
+      events: function(info, success, failure) {
+        const recursoId = selRecurso.value;
+        if (!recursoId) { success([]); return; }
+        const base = '@Url.Action("CalendarioEventos", "Reservas")';
+        const url  = `${base}?recursoId=${encodeURIComponent(recursoId)}&start=${info.start.toISOString()}&end=${info.end.toISOString()}`;
+        fetch(url, { cache: "no-store" })
+          .then(r => { if (!r.ok) throw new Error(`${r.status} ${r.statusText}`); return r.json(); })
+          .then(data => success(data))
+          .catch(err => { console.error(err); failure(err); });
+      },
 
-            calendar = new FullCalendar.Calendar(el, {
-              initialView: 'timeGridWeek',
-              slotMinTime: '07:00:00',
-              slotMaxTime: '22:00:00',
-              slotDuration: '00:30:00',
-              allDaySlot: false,
-              height: 'auto',
-              locale: 'es',
-              firstDay: 1,
-              nowIndicator: true,
-              headerToolbar: {
-                left: 'prev,next today',
-                center: 'title',
-                right: 'dayGridMonth,timeGridWeek,timeGridDay,listWeek'
-              },
-              buttonText: {
-                today: 'Hoy',
-                month: 'Mes',
-                week: 'Semana',
-                day: 'Día',
-                list: 'Agenda'
-              },
+      eventTimeFormat: { hour: '2-digit', minute: '2-digit' },
 
-              // Selección para crear reserva
-              selectable: true,
-              selectMirror: true,
-              unselectAuto: true,
-              selectAllow: function (info) {
-                const min = 30 * 60 * 1000;
-                return (info.end - info.start) >= min;
-              },
-              select: function(info) {
-                const recursoId = selRecurso.value;
-                if (!recursoId) { alert("Selecciona primero un recurso."); return; }
-                if (info.start.toDateString() !== info.end.toDateString()) {
-                  alert("La reserva debe ser dentro del mismo día.");
-                  return;
-                }
-                const base = '@Url.Action("Create", "Reservas")';
-                const params = new URLSearchParams({
-                  recursoId: recursoId,
-                  centroId: selCentro.value || "",
-                  tipoId: selTipo.value || "",
-                  inicio: info.start.toISOString(),
-                  fin: info.end.toISOString()
-                });
-                window.location.href = `${base}?${params.toString()}`;
-              },
+      // Detalle de evento sin alert()
+      eventClick: function(info) {
+        const e = info.event;
+        document.getElementById("mRecurso").textContent = e.title.replace(/\s*\(.*\)\s*$/, "");
+        document.getElementById("mInicio").textContent  = e.start ? e.start.toLocaleString() : "";
+        document.getElementById("mFin").textContent     = e.end ? e.end.toLocaleString() : "";
+        const estado = e.extendedProps?.status || (e.title.match(/\((.*?)\)/)?.[1] ?? "");
+        document.getElementById("mEstado").textContent  = estado;
+        new bootstrap.Modal(document.getElementById("eventModal")).show();
+      }
+    });
 
-              // Cargar eventos de servidor
-              events: function(info, success, failure) {
-                const recursoId = selRecurso.value;
-                if (!recursoId) { success([]); return; }
-                const base = '@Url.Action("CalendarioEventos", "Reservas")';
-                const url  = `${base}?recursoId=${encodeURIComponent(recursoId)}&start=${info.start.toISOString()}&end=${info.end.toISOString()}`;
-                fetch(url, { cache: "no-store" })
-                  .then(r => { if (!r.ok) throw new Error(`${r.status} ${r.statusText}`); return r.json(); })
-                  .then(data => success(data))
-                  .catch(err => { console.error(err); failure(err); });
-              },
+    calendar.render();
+  }
 
-              eventTimeFormat: { hour: '2-digit', minute: '2-digit' },
-              eventClick: function(info) {
-                const e = info.event;
-                alert(`Reserva: ${e.title}\nInicio: ${e.start.toLocaleString()}\nFin: ${e.end ? e.end.toLocaleString() : ''}`);
-              }
-            });
-
-            calendar.render();
-          }
-
-          // Carga inicial
-          onCentroChange();
-        })();
-    </script>
+  // Carga inicial
+  onCentroChange();
+})();
+</script>
 }

@@ -31,7 +31,8 @@ else
                 <td>@reserva.Resource?.NameSpanish</td>
                 <td>@reserva.FechaInicio.ToString("g")</td>
                 <td>@reserva.FechaFin.ToString("g")</td>
-                <td>@reserva.Usuario</td>
+                <td>@(reserva.User?.Dni ?? reserva.UserId.ToString())</td>
+
                 <td>
                     <form asp-action="ValidarReserva" method="post" class="d-inline">
                         <input type="hidden" name="id" value="@reserva.Id" />

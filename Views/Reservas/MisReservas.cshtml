@@ -1,164 +1,150 @@
 ﻿@model IEnumerable<Reservas.Models.Booking>
 
-@functions {
-	string SortIcon(string columna)
-	{
-		var orden = ViewBag.CurrentSort as string ?? "";
-		if (orden.StartsWith(columna))
-		{
-			return orden.EndsWith("_desc") ? "▼" : "▲";
-		}
-		return "";
-	}
-
-	string HeaderClass(string columna)
-	{
-		var orden = ViewBag.CurrentSort as string ?? "";
-		return orden.StartsWith(columna) ? "table-primary" : "";
-	}
-}
-
 @{
-	ViewData["Title"] = "Mis Reservas";
-}
+    ViewData["Title"] = "Mis Reservas";
 
-<h2 class="mb-4">📂 Mis Reservas</h2>
-@{
-	var mensaje = TempData["Mensaje"] as string;
-	var tipo = TempData["TipoMensaje"] as string ?? "success"; // default a verde
-	var icono = tipo == "danger" ? "❌" : tipo == "warning" ? "⚠️" : "✅";
-	var clase = tipo switch
-	{
-		"danger" => "alert-danger",
-		"warning" => "alert-warning",
-		_ => "alert-success"
-	};
+    var mensaje = TempData["Mensaje"] as string;
+    var tipo = TempData["TipoMensaje"] as string ?? "success"; // success por defecto
+    var icono = tipo == "danger" ? "❌" : tipo == "warning" ? "⚠️" : "✅";
+    var clase = tipo switch
+    {
+        "danger" => "alert-danger",
+        "warning" => "alert-warning",
+        _ => "alert-success"
+    };
 }
 
 @if (!string.IsNullOrEmpty(mensaje))
 {
-	<div class="alert @clase alert-dismissible fade show text-center mx-auto" style="max-width: 600px;" role="alert">
-		<strong>@icono</strong> @mensaje
-		<button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Cerrar"></button>
-	</div>
+    <div class="alert @clase alert-dismissible fade show text-center mx-auto" style="max-width: 600px;" role="alert">
+        <strong>@icono</strong> @mensaje
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Cerrar"></button>
+    </div>
 }
 
+@functions {
+    string SortIcon(string columna)
+    {
+        var orden = ViewBag.CurrentSort as string ?? "";
+        if (orden.StartsWith(columna)) return orden.EndsWith("_desc") ? "▼" : "▲";
+        return "";
+    }
+    string HeaderClass(string columna)
+    {
+        var orden = ViewBag.CurrentSort as string ?? "";
+        return orden.StartsWith(columna) ? "table-primary" : "";
+    }
+}
+
+<h2 class="mb-4">📂 Mis Reservas</h2>
 
 @if (!Model.Any())
 {
-	<div class="alert alert-info">Aún no tienes reservas.</div>
+    <div class="alert alert-info">Aún no tienes reservas.</div>
 }
 else
 {
-	<table class="table table-bordered table-striped">
-		<thead>
-			<tr>
-				<th class="@HeaderClass("centro")">
-					@Html.ActionLink("Centro " + SortIcon("centro"), "MisReservas", new { sortOrder = ViewBag.CurrentSort == "centro" ? "centro_desc" : "centro" })
-				</th>
-				<th class="@HeaderClass("recurso")">
-					@Html.ActionLink("Recurso " + SortIcon("recurso"), "MisReservas", new { sortOrder = ViewBag.CurrentSort == "recurso" ? "recurso_desc" : "recurso" })
-				</th>
-				<th class="@HeaderClass("tipo")">
-					@Html.ActionLink("Tipo " + SortIcon("tipo"), "MisReservas", new { sortOrder = ViewBag.CurrentSort == "tipo" ? "tipo_desc" : "tipo" })
-				</th>
-				<th class="@HeaderClass("fechainicio")">
-					@Html.ActionLink("Inicio " + SortIcon("fechainicio"), "MisReservas", new { sortOrder = ViewBag.CurrentSort == "fechainicio" ? "fechainicio_desc" : "fechainicio" })
-				</th>
-				<th class="@HeaderClass("fechafin")">
-					@Html.ActionLink("Fin " + SortIcon("fechafin"), "MisReservas", new { sortOrder = ViewBag.CurrentSort == "fechafin" ? "fechafin_desc" : "fechafin" })
-				</th>
-				<th class="@HeaderClass("estado")">
-					@Html.ActionLink("Estado " + SortIcon("estado"), "MisReservas", new { sortOrder = ViewBag.CurrentSort == "estado" ? "estado_desc" : "estado" })
-				</th>
-				<th class="@HeaderClass("fechacreacion")">
-					@Html.ActionLink("Creada el " + SortIcon("fechacreacion"), "MisReservas", new { sortOrder = ViewBag.CurrentSort == "fechacreacion" ? "fechacreacion_desc" : "fechacreacion" })
-				</th>
-				<th>Acciones</th>
-			</tr>
-		</thead>
-		<tbody>
-	@foreach (var reserva in Model)
-	{
-		<tr>
-			<td>@reserva.Resource?.Center?.NameSpanish</td>
-			<td>@reserva.Resource?.NameSpanish</td>
-			<td>@reserva.Resource?.ResourceType?.NameSpanish</td>
-			<td>@reserva.FechaInicio.ToString("dd/MM/yyyy HH:mm")</td>
-			<td>@reserva.FechaFin.ToString("dd/MM/yyyy HH:mm")</td>
-
-			<td>
-				<span class="badge 
-					@(reserva.Estado == "Confirmada" ? "bg-success" : 
-					  reserva.Estado == "Rechazada" ? "bg-danger" : 
-					  "bg-warning text-dark")">
-					@reserva.Estado
-				</span>
-			</td>
-
-
-			<td>@reserva.FechaCreacion.ToString("dd/MM/yyyy HH:mm")</td>
-			<td>
-				<a asp-action="Edit" asp-route-id="@reserva.Id"
-				   class="btn btn-sm 
-				   @(reserva.Estado == "Confirmada" ? "btn-success" : 
-				     reserva.Estado == "Rechazada" ? "btn-danger" : 
-				     "btn-warning") me-2">
-					✏️ Editar
-				</a>
-				<button type="button" class="btn btn-danger btn-sm"
-						onclick="confirmarEliminacion(
-							@reserva.Id,
-							'@reserva.Resource?.NameSpanish?.Replace("'", "\\'")',
-							'@reserva.FechaInicio.ToString("dd/MM/yyyy HH:mm")',
-							'@reserva.FechaFin.ToString("dd/MM/yyyy HH:mm")')">
-					🗑️ Eliminar
-				</button>
-			</td>
-		</tr>
-	}
-</tbody>
-
-	</table>
+    <table class="table table-bordered table-striped">
+        <thead>
+            <tr>
+                <th class="@HeaderClass("centro")">
+                    @Html.ActionLink("Centro " + SortIcon("centro"), "MisReservas", new { sortOrder = ViewBag.CurrentSort == "centro" ? "centro_desc" : "centro" })
+                </th>
+                <th class="@HeaderClass("recurso")">
+                    @Html.ActionLink("Recurso " + SortIcon("recurso"), "MisReservas", new { sortOrder = ViewBag.CurrentSort == "recurso" ? "recurso_desc" : "recurso" })
+                </th>
+                <th class="@HeaderClass("tipo")">
+                    @Html.ActionLink("Tipo " + SortIcon("tipo"), "MisReservas", new { sortOrder = ViewBag.CurrentSort == "tipo" ? "tipo_desc" : "tipo" })
+                </th>
+                <th class="@HeaderClass("fechainicio")">
+                    @Html.ActionLink("Inicio " + SortIcon("fechainicio"), "MisReservas", new { sortOrder = ViewBag.CurrentSort == "fechainicio" ? "fechainicio_desc" : "fechainicio" })
+                </th>
+                <th class="@HeaderClass("fechafin")">
+                    @Html.ActionLink("Fin " + SortIcon("fechafin"), "MisReservas", new { sortOrder = ViewBag.CurrentSort == "fechafin" ? "fechafin_desc" : "fechafin" })
+                </th>
+                <th class="@HeaderClass("estado")">
+                    @Html.ActionLink("Estado " + SortIcon("estado"), "MisReservas", new { sortOrder = ViewBag.CurrentSort == "estado" ? "estado_desc" : "estado" })
+                </th>
+                <th class="@HeaderClass("fechacreacion")">
+                    @Html.ActionLink("Creada el " + SortIcon("fechacreacion"), "MisReservas", new { sortOrder = ViewBag.CurrentSort == "fechacreacion" ? "fechacreacion_desc" : "fechacreacion" })
+                </th>
+                <th>Acciones</th>
+            </tr>
+        </thead>
+        <tbody>
+        @foreach (var reserva in Model)
+        {
+            <tr>
+                <td>@reserva.Resource?.Center?.NameSpanish</td>
+                <td>@reserva.Resource?.NameSpanish</td>
+                <td>@reserva.Resource?.ResourceType?.NameSpanish</td>
+                <td>@reserva.FechaInicio.ToString("dd/MM/yyyy HH:mm")</td>
+                <td>@reserva.FechaFin.ToString("dd/MM/yyyy HH:mm")</td>
+                <td>
+                    <span class="badge @(reserva.Estado == "Confirmada" ? "bg-success" :
+                                         reserva.Estado == "Rechazada" ? "bg-danger" :
+                                         "bg-warning text-dark")">
+                        @reserva.Estado
+                    </span>
+                </td>
+                <td>@reserva.FechaCreacion.ToString("dd/MM/yyyy HH:mm")</td>
+                <td>
+                    <a asp-action="Edit" asp-route-id="@reserva.Id"
+                       class="btn btn-sm @(reserva.Estado == "Confirmada" ? "btn-success" :
+                                          reserva.Estado == "Rechazada" ? "btn-danger" :
+                                          "btn-warning") me-2">
+                        ✏️ Editar
+                    </a>
+                    <button type="button" class="btn btn-danger btn-sm"
+                            onclick="confirmarEliminacion(
+                                @reserva.Id,
+                                '@reserva.Resource?.NameSpanish?.Replace("'", "\\'")',
+                                '@reserva.FechaInicio.ToString("dd/MM/yyyy HH:mm")',
+                                '@reserva.FechaFin.ToString("dd/MM/yyyy HH:mm")')">
+                        🗑️ Eliminar
+                    </button>
+                </td>
+            </tr>
+        }
+        </tbody>
+    </table>
 }
 
-<!-- Modal personalizado de confirmación -->
+<!-- Modal eliminación -->
 <div class="modal fade" id="modalEliminar" tabindex="-1" aria-labelledby="modalEliminarLabel" aria-hidden="true">
-	<div class="modal-dialog">
-		<div class="modal-content border-danger">
-			<div class="modal-header bg-danger text-white">
-				<h5 class="modal-title" id="modalEliminarLabel">🗑️ Confirmar eliminación</h5>
-				<button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Cerrar"></button>
-			</div>
-			<div class="modal-body text-center">
-				<p class="fs-5 text-danger">¿Estás seguro de que deseas eliminar esta reserva?</p>
-				<p>
-					<strong>📌 Recurso:</strong> <span id="recursoEliminar"></span><br />
-					<strong>🗓️ Inicio:</strong> <span id="inicioEliminar"></span><br />
-					<strong>⏱️ Fin:</strong> <span id="finEliminar"></span>
-				</p>
-				<i class="bi bi-trash-fill fs-1 text-danger"></i>
-			</div>
-			<div class="modal-footer">
-				<form id="formEliminar" method="post">
-					<button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-					<button type="submit" class="btn btn-danger">Eliminar</button>
-				</form>
-			</div>
-		</div>
-	</div>
+  <div class="modal-dialog">
+    <div class="modal-content border-danger">
+      <div class="modal-header bg-danger text-white">
+        <h5 class="modal-title" id="modalEliminarLabel">🗑️ Confirmar eliminación</h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+      </div>
+      <div class="modal-body text-center">
+        <p class="fs-5 text-danger">¿Estás seguro de que deseas eliminar esta reserva?</p>
+        <p>
+          <strong>📌 Recurso:</strong> <span id="recursoEliminar"></span><br />
+          <strong>🗓️ Inicio:</strong> <span id="inicioEliminar"></span><br />
+          <strong>⏱️ Fin:</strong> <span id="finEliminar"></span>
+        </p>
+      </div>
+      <div class="modal-footer">
+        <form id="formEliminar" method="post">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+          <button type="submit" class="btn btn-danger">Eliminar</button>
+        </form>
+      </div>
+    </div>
+  </div>
 </div>
 
 @section Scripts {
-	<script>
-		function confirmarEliminacion(id, recurso, inicio, fin) {
-			document.getElementById("formEliminar").action = `/Reservas/Delete/${id}`;
-			document.getElementById("recursoEliminar").textContent = recurso;
-			document.getElementById("inicioEliminar").textContent = inicio;
-			document.getElementById("finEliminar").textContent = fin;
-
-			const modal = new bootstrap.Modal(document.getElementById("modalEliminar"));
-			modal.show();
-		}
-	</script>
+    <script>
+        function confirmarEliminacion(id, recurso, inicio, fin) {
+            document.getElementById("formEliminar").action = `/Reservas/Delete/${id}`;
+            document.getElementById("recursoEliminar").textContent = recurso;
+            document.getElementById("inicioEliminar").textContent = inicio;
+            document.getElementById("finEliminar").textContent = fin;
+            const modal = new bootstrap.Modal(document.getElementById("modalEliminar"));
+            modal.show();
+        }
+    </script>
 }

@@ -1,11 +1,9 @@
-﻿using System.Collections.Generic;
-
-namespace Reservas.Models
+﻿namespace Reservas.Models
 {
     public class CalendarioViewModel
     {
-        public List<Resource> Recursos { get; set; }
-        public List<Booking> Reservas { get; set; }
-
+        public int? CentroId { get; set; }
+        public int? TipoId { get; set; }
+        public int? RecursoId { get; set; }
     }
 }

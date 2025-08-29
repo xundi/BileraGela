@@ -5,6 +5,7 @@ using Reservas.Models;
 using Reservas.Models.ViewModels;
 using Reservas.Services;
 using System.Security.Claims;
+using Microsoft.AspNetCore.Mvc.Rendering;
 
 namespace Reservas.Controllers
 {
@@ -20,21 +21,49 @@ namespace Reservas.Controllers
         }
 
         // ===================== CREATE =====================
-        // GET: /Reservas/Create?centroId=1&tipoId=1&recursoId=10
         [HttpGet]
-        public IActionResult Create(int? centroId, int? tipoId, int? recursoId)
+        public async Task<IActionResult> Create(int? centroId, int? tipoId, int? recursoId)
         {
+            var inicio = DateTime.Now.AddMinutes(5);
+
+            string? centroNombre = null, tipoNombre = null, recursoNombre = null;
+
+            if (recursoId.HasValue)
+            {
+                var recurso = await _context.Resources
+                    .Include(r => r.Center)
+                    .Include(r => r.ResourceType)
+                    .FirstOrDefaultAsync(r => r.Id == recursoId.Value);
+
+                if (recurso != null)
+                {
+                    recursoNombre = recurso.NameSpanish;
+                    centroNombre = recurso.Center?.NameSpanish;
+                    tipoNombre = recurso.ResourceType?.NameSpanish;
+
+                    centroId ??= recurso.CenterId;
+                    tipoId ??= recurso.ResourceTypeId;
+                }
+            }
+
             var vm = new ReservaViewModel
             {
                 CentroId = centroId,
                 TipoId = tipoId,
                 RecursoId = recursoId,
-                FechaInicio = DateTime.Now,
-                FechaFin = DateTime.Now.AddHours(1)
+                CentroNombre = centroNombre,
+                TipoNombre = tipoNombre,
+                RecursoNombre = recursoNombre,
+                FechaInicio = inicio,
+                FechaFin = inicio.AddHours(1)
             };
+
             return View(vm);
         }
 
+
+
+        // POST: /Reservas/Create
         // POST: /Reservas/Create
         [HttpPost]
         [ValidateAntiForgeryToken]
@@ -47,17 +76,15 @@ namespace Reservas.Controllers
                 return View(vm);
             }
 
-            var userIdStr = User.FindFirstValue(ClaimTypes.NameIdentifier);
-            if (!int.TryParse(userIdStr, out var userId))
-            {
-                ModelState.AddModelError("", "No se pudo identificar al usuario.");
-                return View(vm);
-            }
+            // ← Obtén el usuario por DNI (Name)
+            var dni = User.Identity?.Name;
+            var usuario = await _context.Users.FirstOrDefaultAsync(u => u.Dni == dni);
+            if (usuario == null) return Unauthorized();
 
             var reserva = new Booking
             {
                 ResourceId = vm.RecursoId.Value,
-                UserId = userId,                     // UserId es int
+                UserId = usuario.Id,              // ← aquí va el int real
                 FechaInicio = vm.FechaInicio,
                 FechaFin = vm.FechaFin,
                 Estado = "Pendiente",
@@ -72,20 +99,23 @@ namespace Reservas.Controllers
             return RedirectToAction(nameof(MisReservas));
         }
 
+
         // ===================== MIS RESERVAS (con orden) =====================
+        // GET: /Reservas/MisReservas
         [HttpGet]
         public async Task<IActionResult> MisReservas(string? sortOrder)
         {
-            var userIdStr = User.FindFirstValue(ClaimTypes.NameIdentifier);
-            if (!int.TryParse(userIdStr, out var userId)) return Unauthorized();
+            // ← Igual que en Validar()
+            var dni = User.Identity?.Name;
+            var usuario = await _context.Users.FirstOrDefaultAsync(u => u.Dni == dni);
+            if (usuario == null) return Unauthorized();
 
             IQueryable<Booking> query = _context.Bookings
                 .Include(b => b.Resource).ThenInclude(r => r.Center)
                 .Include(b => b.Resource).ThenInclude(r => r.ResourceType)
-                .Where(b => b.UserId == userId);
+                .Where(b => b.UserId == usuario.Id);
 
             ViewBag.CurrentSort = string.IsNullOrEmpty(sortOrder) ? "fechainicio_desc" : sortOrder;
-
             switch (sortOrder)
             {
                 case "centro": query = query.OrderBy(b => b.Resource.Center.NameSpanish); break;
@@ -134,6 +164,73 @@ namespace Reservas.Controllers
             TempData["TipoMensaje"] = "success";
             return RedirectToAction(nameof(MisReservas));
         }
+        // ===================== CALENDARIO =====================
+        // GET: /Reservas/Calendario
+        [HttpGet]
+        public async Task<IActionResult> Calendario(int? centroId, int? tipoId, int? recursoId)
+        {
+            // Centros
+            ViewBag.Centros = await _context.Centers
+                .OrderBy(c => c.NameSpanish)
+                .Select(c => new SelectListItem { Value = c.Id.ToString(), Text = c.NameSpanish })
+                .ToListAsync();
+
+            // Tipos de recurso
+            ViewBag.Tipos = await _context.ResourceTypes
+                .OrderBy(t => t.NameSpanish)
+                .Select(t => new SelectListItem { Value = t.Id.ToString(), Text = t.NameSpanish })
+                .ToListAsync();
+
+            // Recursos -> tu RecursoOptionVM
+            ViewBag.Recursos = await _context.Resources
+                .Include(r => r.Center)
+                .Include(r => r.ResourceType)
+                .OrderBy(r => r.NameSpanish)
+                .Select(r => new RecursoOptionVM
+                {
+                    Value = r.Id.ToString(),     // ok como string para el <option value="">
+                    Text = r.NameSpanish,
+                    CenterId = r.CenterId,       // <-- int (sin ToString)
+                    ResourceTypeId = r.ResourceTypeId // <-- int (sin ToString)
+                })
+                .ToListAsync();
+
+            // Preselección que usa la vista (data-selected)
+            ViewBag.CentroId = centroId;
+            ViewBag.TipoId = tipoId;
+            ViewBag.RecursoId = recursoId;
+
+            // Si tienes CalendarioViewModel, pásalo; si no, devuelve View() a secas.
+            var vm = new CalendarioViewModel { CentroId = centroId, TipoId = tipoId, RecursoId = recursoId };
+            return View(vm);
+        }
+
+        // GET: /Reservas/CalendarioEventos?recursoId=10&start=...&end=...
+        [HttpGet]
+        public async Task<IActionResult> CalendarioEventos(int recursoId, DateTimeOffset start, DateTimeOffset end)
+        {
+            // Ojo con zonas horarias: FullCalendar envía UTC (toISOString).
+            var desde = start.LocalDateTime;
+            var hasta = end.LocalDateTime;
+
+            var eventos = await _context.Bookings
+                .Include(b => b.Resource)
+                .Where(b => b.ResourceId == recursoId && b.FechaInicio < hasta && b.FechaFin > desde)
+                .Select(b => new
+                {
+                    id = b.Id,
+                    title = $"{b.Resource.NameSpanish} ({b.Estado})",
+                    start = b.FechaInicio,
+                    end = b.FechaFin,
+                    color = b.Estado == "Confirmada" ? "#23a559"
+                           : b.Estado == "Rechazada" ? "#d9534f"
+                           : "#f0ad4e"
+                })
+                .ToListAsync();
+
+            return Json(eventos);
+        }
+
 
         // ===================== VALIDAR (validador) =====================
         [HttpGet]
@@ -150,6 +247,7 @@ namespace Reservas.Controllers
                 .ToListAsync();
 
             var reservas = await _context.Bookings
+                .Include(b => b.User)
                 .Include(b => b.Resource).ThenInclude(r => r.Center)
                 .Where(b => recursosAsignados.Contains(b.ResourceId))
                 .Where(b => b.Estado == "Pendiente")

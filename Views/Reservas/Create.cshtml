@@ -3,9 +3,16 @@
     ViewData["Title"] = "Nueva reserva";
 }
 
-<h2>@ViewData["Title"]</h2>
+<h2>Nueva reserva</h2>
 
-<form asp-action="Create" method="post">
+<!-- Resumen del recurso -->
+<div class="mb-3 p-3 border rounded bg-light">
+    <div><strong>🏢 Centro:</strong> @Model.CentroNombre</div>
+    <div><strong>📌 Recurso:</strong> @Model.RecursoNombre</div>
+    <div><strong>🧩 Tipo:</strong> @Model.TipoNombre</div>
+</div>
+
+<form id="formCreate" asp-action="Create" method="post">
     @Html.AntiForgeryToken()
 
     <input type="hidden" asp-for="CentroId" />
@@ -14,20 +21,84 @@
 
     <div class="mb-3">
         <label asp-for="FechaInicio" class="form-label"></label>
-        <input asp-for="FechaInicio" class="form-control" type="datetime-local" />
+        <input class="form-control"
+               type="datetime-local"
+               id="FechaInicio"
+               name="FechaInicio"
+               value="@Model.FechaInicio.ToString("yyyy-MM-ddTHH:mm")"
+               min="@DateTime.Now.ToString("yyyy-MM-ddTHH:mm")" />
         <span asp-validation-for="FechaInicio" class="text-danger"></span>
     </div>
 
     <div class="mb-3">
         <label asp-for="FechaFin" class="form-label"></label>
-        <input asp-for="FechaFin" class="form-control" type="datetime-local" />
+        <input class="form-control"
+               type="datetime-local"
+               id="FechaFin"
+               name="FechaFin"
+               value="@Model.FechaFin.ToString("yyyy-MM-ddTHH:mm")"
+               min="@Model.FechaInicio.ToString("yyyy-MM-ddTHH:mm")" />
         <span asp-validation-for="FechaFin" class="text-danger"></span>
     </div>
 
-    <button type="submit" class="btn btn-primary">Guardar</button>
+    <!-- Abre modal de confirmación -->
+    <button type="button" class="btn btn-primary" onclick="abrirConfirmacion()">Guardar</button>
     <a asp-action="MisReservas" class="btn btn-secondary">Cancelar</a>
 </form>
 
+<!-- Modal de confirmación -->
+<div class="modal fade" id="confirmacionModal" tabindex="-1" aria-labelledby="confirmacionLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header bg-primary text-white">
+        <h5 class="modal-title" id="confirmacionLabel">Confirmar reserva</h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <p>¿Deseas confirmar esta reserva?</p>
+        <p><strong>🏢 Centro:</strong> <span id="confirmCentro">@Model.CentroNombre</span></p>
+        <p><strong>📌 Recurso:</strong> <span id="confirmRecurso">@Model.RecursoNombre</span></p>
+        <p><strong>🧩 Tipo:</strong> <span id="confirmTipo">@Model.TipoNombre</span></p>
+        <p><strong>📅 Inicio:</strong> <span id="confirmInicio"></span></p>
+        <p><strong>⏱️ Fin:</strong> <span id="confirmFin"></span></p>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+        <button type="button" class="btn btn-primary" onclick="document.getElementById('formCreate').submit()">Confirmar</button>
+      </div>
+    </div>
+  </div>
+</div>
+
 @section Scripts {
     @{ await Html.RenderPartialAsync("_ValidationScriptsPartial"); }
+
+    <script>
+        // yyyy-MM-ddTHH:mm (LOCAL)
+        function toLocalInputValue(d) {
+            const pad = n => String(n).padStart(2, '0');
+            return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+        }
+
+        const ini = document.getElementById('FechaInicio');
+        const fin = document.getElementById('FechaFin');
+
+        function syncMinFin() {
+            fin.min = ini.value;
+            if (fin.value && fin.value <= ini.value) {
+                const d = new Date(ini.value);
+                d.setHours(d.getHours() + 1);
+                fin.value = toLocalInputValue(d);
+            }
+        }
+
+        function abrirConfirmacion() {
+            document.getElementById("confirmInicio").textContent = ini.value.replace("T"," ");
+            document.getElementById("confirmFin").textContent    = fin.value.replace("T"," ");
+            new bootstrap.Modal(document.getElementById("confirmacionModal")).show();
+        }
+
+        ini.addEventListener('change', syncMinFin);
+        window.addEventListener('load', syncMinFin);
+    </script>
 }
