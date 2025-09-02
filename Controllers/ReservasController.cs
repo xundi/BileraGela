@@ -63,7 +63,7 @@ namespace Reservas.Controllers
 
 
 
-        // POST: /Reservas/Create
+        
         // POST: /Reservas/Create
         [HttpPost]
         [ValidateAntiForgeryToken]
@@ -75,7 +75,12 @@ namespace Reservas.Controllers
                 ModelState.AddModelError(nameof(vm.RecursoId), "Falta seleccionar el recurso.");
                 return View(vm);
             }
-
+            if (vm.FechaFin <= vm.FechaInicio.AddMinutes(1))
+            {
+                ModelState.AddModelError(nameof(vm.FechaFin),
+                    "La fecha fin debe ser al menos 1 minuto posterior a la fecha de inicio.");
+                return View(vm);
+            }
             // ← Obtén el usuario por DNI (Name)
             var dni = User.Identity?.Name;
             var usuario = await _context.Users.FirstOrDefaultAsync(u => u.Dni == dni);
@@ -137,18 +142,27 @@ namespace Reservas.Controllers
 
             var lista = await query.ToListAsync();
             return View(lista);
+
         }
 
-        // ===================== DELETE (desde tu modal) =====================
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Delete(int id)
+
+
+        // ===================== EDIT =====================
+
+        // ===================== EDIT =====================
+
+        // GET: /Reservas/Edit/5
+        [HttpGet]
+        public async Task<IActionResult> Edit(int id)
         {
-            var userIdStr = User.FindFirstValue(ClaimTypes.NameIdentifier);
-            if (!int.TryParse(userIdStr, out var userId)) return Unauthorized();
+            var dni = User.Identity?.Name;
+            var usuario = await _context.Users.FirstOrDefaultAsync(u => u.Dni == dni);
+            if (usuario == null) return Unauthorized();
 
             var reserva = await _context.Bookings
-                .FirstOrDefaultAsync(b => b.Id == id && b.UserId == userId);
+                .Include(b => b.Resource).ThenInclude(r => r.Center)
+                .Include(b => b.Resource).ThenInclude(r => r.ResourceType)
+                .FirstOrDefaultAsync(b => b.Id == id && b.UserId == usuario.Id);
 
             if (reserva == null)
             {
@@ -157,13 +171,113 @@ namespace Reservas.Controllers
                 return RedirectToAction(nameof(MisReservas));
             }
 
-            _context.Bookings.Remove(reserva);
-            await _context.SaveChangesAsync();
+            return View(reserva);
+        }
 
-            TempData["Mensaje"] = "Reserva eliminada correctamente.";
+        // POST: /Reservas/Edit  (mismo esquema que Delete)
+        [HttpPost, ActionName("Edit")]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> EditPost([Bind("Id,ResourceId,FechaInicio,FechaFin,Sala,Estado")] Booking input)
+        {
+            var dni = User.Identity?.Name;
+            var usuario = await _context.Users.FirstOrDefaultAsync(u => u.Dni == dni);
+            if (usuario == null) return Unauthorized();
+
+            // Limpiar campos no posteados
+            ModelState.Remove(nameof(Booking.UserId));
+            ModelState.Remove(nameof(Booking.User));
+            ModelState.Remove(nameof(Booking.Resource));
+            ModelState.Remove(nameof(Booking.FechaCreacion));
+
+            // Derivar Sala del recurso si viene vacía
+            if (string.IsNullOrWhiteSpace(input.Sala) && input.ResourceId > 0)
+            {
+                var sala = await _context.Resources
+                    .Where(r => r.Id == input.ResourceId)
+                    .Select(r => r.NameSpanish)
+                    .FirstOrDefaultAsync();
+
+                if (sala is null)
+                {
+                    ModelState.AddModelError(nameof(input.ResourceId), "No se encontró el recurso.");
+                    return View("Edit", input);
+                }
+                input.Sala = sala;
+            }
+            ModelState.Remove(nameof(Booking.Sala));
+
+            // Fin > Inicio
+            if (input.FechaFin <= input.FechaInicio)
+                ModelState.AddModelError(nameof(input.FechaFin),
+                    "La fecha fin debe ser posterior a la fecha de inicio.");
+
+            if (!ModelState.IsValid) return View("Edit", input);
+
+            var reserva = await _context.Bookings
+                .FirstOrDefaultAsync(b => b.Id == input.Id && b.UserId == usuario.Id);
+            if (reserva == null)
+            {
+                TempData["Mensaje"] = "No se encontró la reserva o no te pertenece.";
+                TempData["TipoMensaje"] = "danger";
+                return RedirectToAction(nameof(MisReservas));
+            }
+
+            reserva.FechaInicio = input.FechaInicio;
+            reserva.FechaFin = input.FechaFin;
+            reserva.ResourceId = input.ResourceId;
+            reserva.Sala = input.Sala;
+            reserva.Estado = input.Estado;
+
+            await _context.SaveChangesAsync();
+            TempData["Mensaje"] = "✅ Reserva actualizada correctamente.";
             TempData["TipoMensaje"] = "success";
             return RedirectToAction(nameof(MisReservas));
         }
+
+
+
+
+
+        // ===================== DELETE (desde tu modal) =====================
+
+        // GET /Reservas/Delete/64  (si usas la vista de confirmación Delete.cshtml)
+        [HttpGet]
+        public async Task<IActionResult> Delete(int id)
+        {
+            var reserva = await _context.Bookings
+                .Include(b => b.Resource)
+                .FirstOrDefaultAsync(b => b.Id == id);   // sin restricciones por estado
+            if (reserva == null) return NotFound();
+            return View(reserva);
+        }
+
+        // POST /Reservas/Delete  (desde tu modal o la vista)
+        [HttpPost, ActionName("Delete")]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> DeleteConfirmed(int id)
+        {
+            var reserva = await _context.Bookings.FirstOrDefaultAsync(b => b.Id == id);
+            if (reserva == null)
+            {
+                TempData["Mensaje"] = "No se encontró la reserva.";
+                TempData["TipoMensaje"] = "danger";
+                return RedirectToAction(nameof(MisReservas));
+            }
+
+            _context.Bookings.Remove(reserva);
+            await _context.SaveChangesAsync();
+
+            TempData["Mensaje"] =
+                $"Reserva de {(reserva.Resource?.NameSpanish ?? reserva.Sala)} " +
+                $"({reserva.FechaInicio:g}–{reserva.FechaFin:g}) eliminada correctamente.";
+            TempData["TipoMensaje"] = "success";
+
+            return RedirectToAction(nameof(MisReservas));
+        }
+
+
+
+
         // ===================== CALENDARIO =====================
         // GET: /Reservas/Calendario
         [HttpGet]

@@ -127,24 +127,30 @@ else
         </p>
       </div>
       <div class="modal-footer">
-        <form id="formEliminar" method="post">
-          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-          <button type="submit" class="btn btn-danger">Eliminar</button>
-        </form>
-      </div>
+          <form id="formEliminar" asp-controller="Reservas" asp-action="Delete" method="post">
+            @Html.AntiForgeryToken()
+            <input type="hidden" name="id" id="idEliminar" />
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+            <button type="submit" class="btn btn-danger">Eliminar</button>
+          </form>
+    </div>
+
+
     </div>
   </div>
 </div>
 
 @section Scripts {
     <script>
-        function confirmarEliminacion(id, recurso, inicio, fin) {
-            document.getElementById("formEliminar").action = `/Reservas/Delete/${id}`;
-            document.getElementById("recursoEliminar").textContent = recurso;
-            document.getElementById("inicioEliminar").textContent = inicio;
-            document.getElementById("finEliminar").textContent = fin;
-            const modal = new bootstrap.Modal(document.getElementById("modalEliminar"));
-            modal.show();
-        }
-    </script>
+      function confirmarEliminacion(id, recurso, inicio, fin) {
+          document.getElementById("idEliminar").value = id;
+          document.getElementById("recursoEliminar").textContent = recurso;
+          document.getElementById("inicioEliminar").textContent = inicio;
+          document.getElementById("finEliminar").textContent = fin;
+
+          const modal = new bootstrap.Modal(document.getElementById("modalEliminar"));
+          modal.show();
+      }
+</script>
+
 }

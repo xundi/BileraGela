@@ -2,64 +2,92 @@
 @using Microsoft.AspNetCore.Http
 @{
     var tipoUsuario = Context.Session.GetInt32("UserTypeId") ?? 0;
-}
-
-
-@{
     ViewData["Title"] = "Editar Reserva";
 }
 
 <h2 class="mb-4">✏️ Editar Reserva</h2>
 
-<form asp-action="Edit" method="post">
-    <input type="hidden" asp-for="Id" />
+<!-- Encabezado al estilo "Nueva reserva" (Centro → Tipo → Recurso) -->
+<div class="card mb-3">
+  <div class="card-body">
+    <p class="mb-2"><strong>🏫 Centro:</strong> @(Model.Resource?.Center?.NameSpanish ?? "—")</p>
+    <p class="mb-2"><strong>📂 Tipo:</strong> @(Model.Resource?.ResourceType?.NameSpanish ?? "—")</p>
+    <p class="mb-0"><strong>🧩 Recurso:</strong> @(Model.Resource?.NameSpanish ?? Model.Sala ?? "—")</p>
+  </div>
+</div>
 
-    <div class="mb-3">
-        <label class="form-label">Recurso</label>
-        <input class="form-control" value="@Model.Sala" readonly />
-    </div>
+<form asp-action="Edit" method="post">
+    @Html.AntiForgeryToken()
+    <input type="hidden" asp-for="Id" />
+    <!-- NECESARIOS para que lleguen al POST -->
+    <input type="hidden" asp-for="ResourceId" />
+    <input type="hidden" asp-for="Sala" value="@(Model.Sala ?? Model.Resource?.NameSpanish)" />
+
+    <div asp-validation-summary="All" class="text-danger mb-2"></div>
 
     <div class="mb-3">
         <label asp-for="FechaInicio" class="form-label"></label>
         <input asp-for="FechaInicio" class="form-control" type="datetime-local"
-               value="@Model.FechaInicio.ToString("yyyy-MM-ddTHH:mm")" />
+               asp-format="{0:yyyy-MM-ddTHH:mm}" />
         <span asp-validation-for="FechaInicio" class="text-danger"></span>
     </div>
 
     <div class="mb-3">
         <label asp-for="FechaFin" class="form-label"></label>
         <input asp-for="FechaFin" class="form-control" type="datetime-local"
-               value="@Model.FechaFin.ToString("yyyy-MM-ddTHH:mm")" />
+               asp-format="{0:yyyy-MM-ddTHH:mm}"
+               min="@Model.FechaInicio.ToString("yyyy-MM-ddTHH:mm")" />
         <span asp-validation-for="FechaFin" class="text-danger"></span>
     </div>
 
     <div class="mb-3">
         <label asp-for="Estado" class="form-label"></label>
-
-        @if (tipoUsuario >= 3) // Administrador
-        {
+        @if (tipoUsuario >= 3) {
             <select asp-for="Estado" class="form-select">
                 <option value="Pendiente">Pendiente</option>
                 <option value="Confirmada">Confirmada</option>
-                <option value="Cancelada">Cancelada</option>
+                <option value="Rechazada">Rechazada</option>
             </select>
-        }
-        else
-        {
+        } else {
             <input type="text" class="form-control" value="@Model.Estado" readonly />
             <input type="hidden" asp-for="Estado" />
         }
-
         <span asp-validation-for="Estado" class="text-danger"></span>
     </div>
-
 
     <button type="submit" class="btn btn-primary">Guardar cambios</button>
     <a asp-action="MisReservas" class="btn btn-secondary">Cancelar</a>
 </form>
 
 @section Scripts {
-    @{
-        await Html.RenderPartialAsync("_ValidationScriptsPartial");
-    }
+    @{ await Html.RenderPartialAsync("_ValidationScriptsPartial"); }
+    <script>
+      (function () {
+        const ini = document.getElementById('FechaInicio');
+        const fin = document.getElementById('FechaFin');
+
+        function fmtLocal(d) {
+          const p = n => String(n).padStart(2, '0');
+          return d.getFullYear() + '-' + p(d.getMonth()+1) + '-' + p(d.getDate()) +
+                 'T' + p(d.getHours()) + ':' + p(d.getMinutes());
+        }
+        function parseLocal(s) {
+          if (!s) return null;
+          const [d,t] = s.split('T'); const [y,m,day] = d.split('-').map(Number);
+          const [hh,mm] = t.split(':').map(Number);
+          return new Date(y, m-1, day, hh, mm);
+        }
+        function syncMin() {
+          if (!ini || !fin) return;
+          fin.min = ini.value || '';
+          if (ini.value && fin.value && fin.value <= ini.value) {
+            const start = parseLocal(ini.value);
+            start.setMinutes(start.getMinutes() + 1); // mínimo +1 min
+            fin.value = fmtLocal(start);
+          }
+        }
+        document.addEventListener('DOMContentLoaded', syncMin);
+        if (ini) ini.addEventListener('change', syncMin);
+      })();
+    </script>
 }
