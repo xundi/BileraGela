@@ -67,8 +67,16 @@ namespace Reservas.Controllers
         public async Task<IActionResult> Logout()
         {
             await HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
-            HttpContext.Session.Clear(); // 👈 Limpieza adicional
+            HttpContext.Session.Clear();
+
+            // Borra todas las cookies manualmente (extra de seguridad)
+            foreach (var cookie in Request.Cookies.Keys)
+            {
+                Response.Cookies.Delete(cookie);
+            }
+
             return RedirectToAction("Login", "Account");
         }
+
     }
 }

@@ -1,104 +1,102 @@
 ﻿@model Reservas.Models.ViewModels.ReservaViewModel
+@using Microsoft.AspNetCore.Http
 @{
+    var tipoUsuario = Context.Session.GetInt32("UserTypeId") ?? 0;
     ViewData["Title"] = "Nueva reserva";
 }
 
-<h2>Nueva reserva</h2>
+<h2 class="mb-4">📅 Nueva reserva</h2>
 
-<!-- Resumen del recurso -->
-<div class="mb-3 p-3 border rounded bg-light">
-    <div><strong>🏢 Centro:</strong> @Model.CentroNombre</div>
-    <div><strong>📌 Recurso:</strong> @Model.RecursoNombre</div>
-    <div><strong>🧩 Tipo:</strong> @Model.TipoNombre</div>
+<div class="card mb-3">
+  <div class="card-body">
+    <p class="mb-2"><strong>🏫 Centro:</strong> @Model.CentroNombre</p>
+    <p class="mb-2"><strong>🧩 Recurso:</strong> @Model.RecursoNombre</p>
+    <p class="mb-0"><strong>📂 Tipo:</strong> @Model.TipoNombre</p>
+  </div>
 </div>
 
-<form id="formCreate" asp-action="Create" method="post">
+<form asp-action="Create" method="post">
     @Html.AntiForgeryToken()
-
     <input type="hidden" asp-for="CentroId" />
     <input type="hidden" asp-for="TipoId" />
     <input type="hidden" asp-for="RecursoId" />
 
+    <div asp-validation-summary="All" class="text-danger mb-2"></div>
+
     <div class="mb-3">
         <label asp-for="FechaInicio" class="form-label"></label>
-        <input class="form-control"
-               type="datetime-local"
-               id="FechaInicio"
-               name="FechaInicio"
-               value="@Model.FechaInicio.ToString("yyyy-MM-ddTHH:mm")"
-               min="@DateTime.Now.ToString("yyyy-MM-ddTHH:mm")" />
+        <input asp-for="FechaInicio" class="form-control datetime" id="FechaInicio" />
         <span asp-validation-for="FechaInicio" class="text-danger"></span>
     </div>
 
     <div class="mb-3">
         <label asp-for="FechaFin" class="form-label"></label>
-        <input class="form-control"
-               type="datetime-local"
-               id="FechaFin"
-               name="FechaFin"
-               value="@Model.FechaFin.ToString("yyyy-MM-ddTHH:mm")"
-               min="@Model.FechaInicio.ToString("yyyy-MM-ddTHH:mm")" />
+        <input asp-for="FechaFin" class="form-control datetime" id="FechaFin" />
         <span asp-validation-for="FechaFin" class="text-danger"></span>
     </div>
 
-    <!-- Abre modal de confirmación -->
-    <button type="button" class="btn btn-primary" onclick="abrirConfirmacion()">Guardar</button>
+    <button type="submit" class="btn btn-primary">Guardar</button>
     <a asp-action="MisReservas" class="btn btn-secondary">Cancelar</a>
 </form>
-
-<!-- Modal de confirmación -->
-<div class="modal fade" id="confirmacionModal" tabindex="-1" aria-labelledby="confirmacionLabel" aria-hidden="true">
-  <div class="modal-dialog">
-    <div class="modal-content">
-      <div class="modal-header bg-primary text-white">
-        <h5 class="modal-title" id="confirmacionLabel">Confirmar reserva</h5>
-        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
-      </div>
-      <div class="modal-body">
-        <p>¿Deseas confirmar esta reserva?</p>
-        <p><strong>🏢 Centro:</strong> <span id="confirmCentro">@Model.CentroNombre</span></p>
-        <p><strong>📌 Recurso:</strong> <span id="confirmRecurso">@Model.RecursoNombre</span></p>
-        <p><strong>🧩 Tipo:</strong> <span id="confirmTipo">@Model.TipoNombre</span></p>
-        <p><strong>📅 Inicio:</strong> <span id="confirmInicio"></span></p>
-        <p><strong>⏱️ Fin:</strong> <span id="confirmFin"></span></p>
-      </div>
-      <div class="modal-footer">
-        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-        <button type="button" class="btn btn-primary" onclick="document.getElementById('formCreate').submit()">Confirmar</button>
-      </div>
-    </div>
-  </div>
-</div>
 
 @section Scripts {
     @{ await Html.RenderPartialAsync("_ValidationScriptsPartial"); }
 
+    <!-- Flatpickr core -->
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+
+    <!-- Plugin ConfirmDate -->
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr/dist/plugins/confirmDate/confirmDate.min.js"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/plugins/confirmDate/confirmDate.css">
+
     <script>
-        // yyyy-MM-ddTHH:mm (LOCAL)
-        function toLocalInputValue(d) {
-            const pad = n => String(n).padStart(2, '0');
-            return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
-        }
+      document.addEventListener('DOMContentLoaded', function () {
+        const startEl = document.getElementById('FechaInicio');
+        const endEl   = document.getElementById('FechaFin');
 
-        const ini = document.getElementById('FechaInicio');
-        const fin = document.getElementById('FechaFin');
+       const confirmOpts = { 
+          confirmText: 'Aceptar',
+          cancelText: 'Cancelar',   // 👈 añade botón cancelar
+          showAlways: false,
+          theme: 'light'
+        };
 
-        function syncMinFin() {
-            fin.min = ini.value;
-            if (fin.value && fin.value <= ini.value) {
-                const d = new Date(ini.value);
-                d.setHours(d.getHours() + 1);
-                fin.value = toLocalInputValue(d);
+
+        // Instancias Flatpickr
+        const fpIni = flatpickr(startEl, {
+          enableTime: true,
+          dateFormat: "Y-m-d H:i",
+          time_24hr: true,
+          minuteIncrement: 5,
+          plugins: [ new confirmDatePlugin(confirmOpts) ],
+          defaultDate: startEl.value || undefined,
+          onChange: function(selectedDates) {
+            if (selectedDates && selectedDates[0] && fpFin) {
+              fpFin.set('minDate', selectedDates[0]);
+              const finSel = fpFin.selectedDates[0];
+              if (!finSel || finSel <= selectedDates[0]) {
+                const next = new Date(selectedDates[0].getTime() + 60 * 1000); // +1 min
+                fpFin.setDate(next, true);
+              }
             }
-        }
+          }
+        });
 
-        function abrirConfirmacion() {
-            document.getElementById("confirmInicio").textContent = ini.value.replace("T"," ");
-            document.getElementById("confirmFin").textContent    = fin.value.replace("T"," ");
-            new bootstrap.Modal(document.getElementById("confirmacionModal")).show();
-        }
+        const fpFin = flatpickr(endEl, {
+          enableTime: true,
+          dateFormat: "Y-m-d H:i",
+          time_24hr: true,
+          minuteIncrement: 5,
+          plugins: [ new confirmDatePlugin(confirmOpts) ],
+          defaultDate: endEl.value || undefined
+        });
 
-        ini.addEventListener('change', syncMinFin);
-        window.addEventListener('load', syncMinFin);
+        // Sincroniza minDate inicial de Fin según Inicio existente
+        if (startEl.value) {
+          const d = new Date(startEl.value.replace(' ', 'T'));
+          if (!isNaN(d)) fpFin.set('minDate', d);
+        }
+      });
     </script>
 }

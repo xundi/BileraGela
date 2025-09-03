@@ -60,12 +60,12 @@ if (!app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 app.UseStaticFiles();
-app.UseSession();
 
 app.UseRouting();
 
-app.UseAuthentication(); // 🔐
-app.UseAuthorization();
+app.UseSession();          // 👈 Primero sesión
+app.UseAuthentication();   // 👈 Luego autenticación
+app.UseAuthorization();    // 👈 Y autorización
 
 // 🔀 Rutas
 app.MapRazorPages();

@@ -27,16 +27,14 @@
 
     <div class="mb-3">
         <label asp-for="FechaInicio" class="form-label"></label>
-        <input asp-for="FechaInicio" class="form-control" type="datetime-local"
-               asp-format="{0:yyyy-MM-ddTHH:mm}" />
+        <!-- Usamos Flatpickr: input de texto con clase .datetime -->
+        <input asp-for="FechaInicio" class="form-control datetime" id="FechaInicio" />
         <span asp-validation-for="FechaInicio" class="text-danger"></span>
     </div>
 
     <div class="mb-3">
         <label asp-for="FechaFin" class="form-label"></label>
-        <input asp-for="FechaFin" class="form-control" type="datetime-local"
-               asp-format="{0:yyyy-MM-ddTHH:mm}"
-               min="@Model.FechaInicio.ToString("yyyy-MM-ddTHH:mm")" />
+        <input asp-for="FechaFin" class="form-control datetime" id="FechaFin" />
         <span asp-validation-for="FechaFin" class="text-danger"></span>
     </div>
 
@@ -61,33 +59,63 @@
 
 @section Scripts {
     @{ await Html.RenderPartialAsync("_ValidationScriptsPartial"); }
-    <script>
-      (function () {
-        const ini = document.getElementById('FechaInicio');
-        const fin = document.getElementById('FechaFin');
 
-        function fmtLocal(d) {
-          const p = n => String(n).padStart(2, '0');
-          return d.getFullYear() + '-' + p(d.getMonth()+1) + '-' + p(d.getDate()) +
-                 'T' + p(d.getHours()) + ':' + p(d.getMinutes());
-        }
-        function parseLocal(s) {
-          if (!s) return null;
-          const [d,t] = s.split('T'); const [y,m,day] = d.split('-').map(Number);
-          const [hh,mm] = t.split(':').map(Number);
-          return new Date(y, m-1, day, hh, mm);
-        }
-        function syncMin() {
-          if (!ini || !fin) return;
-          fin.min = ini.value || '';
-          if (ini.value && fin.value && fin.value <= ini.value) {
-            const start = parseLocal(ini.value);
-            start.setMinutes(start.getMinutes() + 1); // mínimo +1 min
-            fin.value = fmtLocal(start);
+    <!-- Flatpickr core -->
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+
+    <!-- Plugin ConfirmDate -->
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr/dist/plugins/confirmDate/confirmDate.min.js"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/plugins/confirmDate/confirmDate.css">
+
+    <script>
+      document.addEventListener('DOMContentLoaded', function () {
+        const startEl = document.getElementById('FechaInicio');
+        const endEl   = document.getElementById('FechaFin');
+
+        const confirmOpts = { 
+          confirmText: 'Aceptar',
+          cancelText: 'Cancelar',   // 👈 añade botón cancelar
+          showAlways: false,
+          theme: 'light'
+        };
+
+
+        // Instancias Flatpickr
+        const fpIni = flatpickr(startEl, {
+          enableTime: true,
+          dateFormat: "Y-m-d H:i",
+          time_24hr: true,
+          minuteIncrement: 5,
+          plugins: [ new confirmDatePlugin(confirmOpts) ],
+          defaultDate: startEl.value || undefined,
+          onChange: function(selectedDates) {
+            if (selectedDates && selectedDates[0] && fpFin) {
+              fpFin.set('minDate', selectedDates[0]);
+              const finSel = fpFin.selectedDates[0];
+              if (!finSel || finSel <= selectedDates[0]) {
+                const next = new Date(selectedDates[0].getTime() + 60 * 1000); // +1 min
+                fpFin.setDate(next, true);
+              }
+            }
           }
+        });
+
+        const fpFin = flatpickr(endEl, {
+          enableTime: true,
+          dateFormat: "Y-m-d H:i",
+          time_24hr: true,
+          minuteIncrement: 5,
+          plugins: [ new confirmDatePlugin(confirmOpts) ],
+          defaultDate: endEl.value || undefined
+        });
+
+        // Sincroniza minDate inicial de Fin según Inicio existente
+        if (startEl.value) {
+          // Flatpickr admite ISO con espacio, pero por si acaso normalizamos
+          const d = new Date(startEl.value.replace(' ', 'T'));
+          if (!isNaN(d)) fpFin.set('minDate', d);
         }
-        document.addEventListener('DOMContentLoaded', syncMin);
-        if (ini) ini.addEventListener('change', syncMin);
-      })();
+      });
     </script>
 }

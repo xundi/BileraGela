@@ -99,7 +99,7 @@ namespace Reservas.Controllers
             _context.Bookings.Add(reserva);
             await _context.SaveChangesAsync();
 
-            TempData["Mensaje"] = "✅ Reserva creada correctamente.";
+            TempData["Mensaje"] = "Reserva creada correctamente.";
             TempData["TipoMensaje"] = "success";
             return RedirectToAction(nameof(MisReservas));
         }
@@ -146,8 +146,6 @@ namespace Reservas.Controllers
         }
 
 
-
-        // ===================== EDIT =====================
 
         // ===================== EDIT =====================
 
@@ -336,9 +334,16 @@ namespace Reservas.Controllers
                     title = $"{b.Resource.NameSpanish} ({b.Estado})",
                     start = b.FechaInicio,
                     end = b.FechaFin,
-                    color = b.Estado == "Confirmada" ? "#23a559"
-                           : b.Estado == "Rechazada" ? "#d9534f"
-                           : "#f0ad4e"
+                    // naranja si está pendiente
+                    backgroundColor = b.Estado == "Confirmada" ? "#23a559"
+                                    : b.Estado == "Rechazada" ? "#d9534f"
+                                    : "#ff7518",
+
+                    borderColor = b.Estado == "Confirmada" ? "#1c7c43"
+                                 : b.Estado == "Rechazada" ? "#a94442"
+                                 : "#cc5500"
+
+
                 })
                 .ToListAsync();
 
