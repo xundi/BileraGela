@@ -20,7 +20,7 @@ namespace Reservas.Controllers
             _email = email;
         }
 
-        // ===================== CREATE =====================
+        
         // ===================== CREATE =====================
         [HttpGet]
         public async Task<IActionResult> Create(int? centroId, int? tipoId, int? recursoId, DateTime? inicio, DateTime? fin)
@@ -136,6 +136,17 @@ namespace Reservas.Controllers
                 .Where(b => b.UserId == usuario.Id);
 
             ViewBag.CurrentSort = string.IsNullOrEmpty(sortOrder) ? "fechainicio_desc" : sortOrder;
+
+            ViewBag.CentroSortParm = sortOrder == "centro" ? "centro_desc" : "centro";
+            ViewBag.RecursoSortParm = sortOrder == "recurso" ? "recurso_desc" : "recurso";
+            ViewBag.TipoSortParm = sortOrder == "tipo" ? "tipo_desc" : "tipo";
+            ViewBag.FechaInicioSortParm = sortOrder == "fechainicio" ? "fechainicio_desc" : "fechainicio";
+            ViewBag.FechaFinSortParm = sortOrder == "fechafin" ? "fechafin_desc" : "fechafin";
+            ViewBag.EstadoSortParm = sortOrder == "estado" ? "estado_desc" : "estado";
+            ViewBag.FechaCreacionSortParm = sortOrder == "fechacreacion" ? "fechacreacion_desc" : "fechacreacion"; // 🔵 NUEVO
+
+
+
             switch (sortOrder)
             {
                 case "centro": query = query.OrderBy(b => b.Resource.Center.NameSpanish); break;
@@ -152,7 +163,7 @@ namespace Reservas.Controllers
                 case "estado_desc": query = query.OrderByDescending(b => b.Estado); break;
                 case "fechacreacion": query = query.OrderBy(b => b.FechaCreacion); break;
                 case "fechacreacion_desc": query = query.OrderByDescending(b => b.FechaCreacion); break;
-                default: query = query.OrderByDescending(b => b.FechaInicio); break;
+                default: query = query.OrderByDescending(b => b.FechaCreacion); break;
             }
 
             var lista = await query.ToListAsync();

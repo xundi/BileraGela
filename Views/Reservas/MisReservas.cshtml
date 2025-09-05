@@ -48,29 +48,30 @@ else
         <thead>
             <tr>
                 <th class="@HeaderClass("centro")">
-                    @Html.ActionLink("Centro " + SortIcon("centro"), "MisReservas", new { sortOrder = ViewBag.CurrentSort == "centro" ? "centro_desc" : "centro" })
+                    @Html.ActionLink("Centro " + SortIcon("centro"), "MisReservas", new { sortOrder = ViewBag.CentroSortParm })
                 </th>
                 <th class="@HeaderClass("recurso")">
-                    @Html.ActionLink("Recurso " + SortIcon("recurso"), "MisReservas", new { sortOrder = ViewBag.CurrentSort == "recurso" ? "recurso_desc" : "recurso" })
+                    @Html.ActionLink("Recurso " + SortIcon("recurso"), "MisReservas", new { sortOrder = ViewBag.RecursoSortParm })
                 </th>
                 <th class="@HeaderClass("tipo")">
-                    @Html.ActionLink("Tipo " + SortIcon("tipo"), "MisReservas", new { sortOrder = ViewBag.CurrentSort == "tipo" ? "tipo_desc" : "tipo" })
+                    @Html.ActionLink("Tipo " + SortIcon("tipo"), "MisReservas", new { sortOrder = ViewBag.TipoSortParm })
                 </th>
                 <th class="@HeaderClass("fechainicio")">
-                    @Html.ActionLink("Inicio " + SortIcon("fechainicio"), "MisReservas", new { sortOrder = ViewBag.CurrentSort == "fechainicio" ? "fechainicio_desc" : "fechainicio" })
+                    @Html.ActionLink("Inicio " + SortIcon("fechainicio"), "MisReservas", new { sortOrder = ViewBag.FechaInicioSortParm })
                 </th>
                 <th class="@HeaderClass("fechafin")">
-                    @Html.ActionLink("Fin " + SortIcon("fechafin"), "MisReservas", new { sortOrder = ViewBag.CurrentSort == "fechafin" ? "fechafin_desc" : "fechafin" })
+                    @Html.ActionLink("Fin " + SortIcon("fechafin"), "MisReservas", new { sortOrder = ViewBag.FechaFinSortParm })
                 </th>
                 <th class="@HeaderClass("estado")">
-                    @Html.ActionLink("Estado " + SortIcon("estado"), "MisReservas", new { sortOrder = ViewBag.CurrentSort == "estado" ? "estado_desc" : "estado" })
+                    @Html.ActionLink("Estado " + SortIcon("estado"), "MisReservas", new { sortOrder = ViewBag.EstadoSortParm })
                 </th>
                 <th class="@HeaderClass("fechacreacion")">
-                    @Html.ActionLink("Creada el " + SortIcon("fechacreacion"), "MisReservas", new { sortOrder = ViewBag.CurrentSort == "fechacreacion" ? "fechacreacion_desc" : "fechacreacion" })
+                    @Html.ActionLink("Creada el " + SortIcon("fechacreacion"), "MisReservas", new { sortOrder = ViewBag.FechaCreacionSortParm })
                 </th>
                 <th>Acciones</th>
             </tr>
         </thead>
+
         <tbody>
         @foreach (var reserva in Model)
         {
