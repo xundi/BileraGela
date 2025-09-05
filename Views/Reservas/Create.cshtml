@@ -39,6 +39,52 @@
     <a asp-action="MisReservas" class="btn btn-secondary">Cancelar</a>
 </form>
 
+<!-- SweetAlert -->
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+      const form = document.querySelector("form");
+      const btnGuardar = form.querySelector("button[type=submit]");
+
+      btnGuardar.addEventListener("click", function (e) {
+        e.preventDefault();
+
+        const centro = "@Model.CentroNombre";
+        const recurso = "@Model.RecursoNombre";
+        const tipo = "@Model.TipoNombre";
+        const inicio = document.getElementById("FechaInicio").value;
+        const fin = document.getElementById("FechaFin").value;
+
+        Swal.fire({
+          title: 'Confirmar reserva',
+          html: `
+            <p>¿Deseas confirmar esta nueva reserva?</p>
+            <hr>
+            <p><b>🏫 Centro:</b> ${centro}</p>
+            <p><b>🧩 Recurso:</b> ${recurso}</p>
+            <p><b>📂 Tipo:</b> ${tipo}</p>
+            <p><b>📅 Inicio:</b> ${inicio || "—"}</p>
+            <p><b>📅 Fin:</b> ${fin || "—"}</p>
+          `,
+          icon: 'question',
+          showCancelButton: true,
+          confirmButtonText: 'Sí, confirmar',
+          cancelButtonText: 'Cancelar',
+          customClass: {
+            confirmButton: 'btn btn-primary',
+            cancelButton: 'btn btn-secondary'
+          },
+          buttonsStyling: false
+        }).then((result) => {
+          if (result.isConfirmed) {
+            form.submit();
+          }
+        });
+      });
+    });
+</script>
+
+
 @section Scripts {
     @{ await Html.RenderPartialAsync("_ValidationScriptsPartial"); }
 
