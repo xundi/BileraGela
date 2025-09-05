@@ -69,6 +69,7 @@
           dateFormat: "Y-m-d H:i",
           time_24hr: true,
           minuteIncrement: 5,
+          minDate: "today",   // 🔵 evita reservar en días pasados
           plugins: [ new confirmDatePlugin(confirmOpts) ],
           defaultDate: startEl.value || undefined,
           onChange: function(selectedDates) {
@@ -88,6 +89,7 @@
           dateFormat: "Y-m-d H:i",
           time_24hr: true,
           minuteIncrement: 5,
+          minDate: "today",   // 🔵 evita reservar en días pasados
           plugins: [ new confirmDatePlugin(confirmOpts) ],
           defaultDate: endEl.value || undefined
         });
