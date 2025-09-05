@@ -220,16 +220,23 @@
           showToast("La reserva debe ser dentro del mismo día.");
           return;
         }
+
+        const pad = n => String(n).padStart(2, '0');
+        function formatDate(d) {
+        return d.getFullYear() + "-" + pad(d.getMonth()+1) + "-" + pad(d.getDate()) +
+                 " " + pad(d.getHours()) + ":" + pad(d.getMinutes());
+        }
+
         const base = '@Url.Action("Create", "Reservas")';
-        const params = new URLSearchParams({
-          recursoId: recursoId,
-          centroId: selCentro.value || "",
-          tipoId: selTipo.value || "",
-          inicio: info.start.toISOString(),
-          fin: info.end.toISOString()
-        });
-        window.location.href = `${base}?${params.toString()}`;
-      },
+          const params = new URLSearchParams({
+            recursoId: recursoId,
+            centroId: selCentro.value || "",
+            tipoId: selTipo.value || "",
+            inicio: formatDate(info.start),
+            fin: formatDate(info.end)
+          });
+          window.location.href = `${base}?${params.toString()}`;
+        },
 
       // Carga de eventos
       events: function(info, success, failure) {

@@ -21,10 +21,13 @@ namespace Reservas.Controllers
         }
 
         // ===================== CREATE =====================
+        // ===================== CREATE =====================
         [HttpGet]
-        public async Task<IActionResult> Create(int? centroId, int? tipoId, int? recursoId)
+        public async Task<IActionResult> Create(int? centroId, int? tipoId, int? recursoId, DateTime? inicio, DateTime? fin)
         {
-            var inicio = DateTime.Now.AddMinutes(5);
+            // Si no vienen de calendario, por defecto ahora+5 min
+            var fechaInicio = inicio ?? DateTime.Now.AddMinutes(5);
+            var fechaFin = fin ?? fechaInicio.AddHours(1);
 
             string? centroNombre = null, tipoNombre = null, recursoNombre = null;
 
@@ -54,8 +57,8 @@ namespace Reservas.Controllers
                 CentroNombre = centroNombre,
                 TipoNombre = tipoNombre,
                 RecursoNombre = recursoNombre,
-                FechaInicio = inicio,
-                FechaFin = inicio.AddHours(1)
+                FechaInicio = fechaInicio,
+                FechaFin = fechaFin
             };
 
             return View(vm);
@@ -63,7 +66,7 @@ namespace Reservas.Controllers
 
 
 
-        
+
         // POST: /Reservas/Create
         [HttpPost]
         [ValidateAntiForgeryToken]
@@ -75,12 +78,24 @@ namespace Reservas.Controllers
                 ModelState.AddModelError(nameof(vm.RecursoId), "Falta seleccionar el recurso.");
                 return View(vm);
             }
-            if (vm.FechaFin <= vm.FechaInicio.AddMinutes(1))
+
+            // 🚫 No permitir reservas en el pasado
+            if (vm.FechaInicio < DateTime.Now)
             {
-                ModelState.AddModelError(nameof(vm.FechaFin),
-                    "La fecha fin debe ser al menos 1 minuto posterior a la fecha de inicio.");
+                ModelState.AddModelError(nameof(vm.FechaInicio),
+                    "La fecha de inicio no puede ser anterior al momento actual.");
                 return View(vm);
             }
+
+            // ⏱️ Diferencia mínima de 30 minutos
+            if (vm.FechaFin <= vm.FechaInicio.AddMinutes(30))
+            {
+                ModelState.AddModelError(nameof(vm.FechaFin),
+                    "La fecha fin debe ser al menos 30 minutos posterior a la fecha de inicio.");
+                return View(vm);
+            }
+
+
             // ← Obtén el usuario por DNI (Name)
             var dni = User.Identity?.Name;
             var usuario = await _context.Users.FirstOrDefaultAsync(u => u.Dni == dni);
