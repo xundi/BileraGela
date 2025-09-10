@@ -1,0 +1,119 @@
+﻿@* File: Views/Reservas/Datos.cshtml *@
+@addTagHelper *, Microsoft.AspNetCore.Mvc.TagHelpers
+@using Microsoft.AspNetCore.Mvc.Rendering
+@using Reservas.Models                  @* para AmbitoActividad *@
+@model Reservas.Models.ViewModels.BookingFormViewModel
+
+@{
+    ViewData["Title"] = "Datos de contacto y actividad";
+    var equiposOps = new[] { "Proyector", "PC", "Altavoces", "Pizarra", "Videoconferencia" };
+}
+
+<h2 class="mb-3">Datos de contacto y actividad</h2>
+<p class="text-muted">Rellena todos los campos para finalizar tu reserva.</p>
+
+<form asp-action="Datos" method="post" class="mt-3">
+    <input type="hidden" asp-for="BookingId" />
+    <input type="hidden" asp-for="ResourceId" />
+
+    <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
+
+    <div class="row g-3 mb-2">
+        <div class="col-md-6">
+            <label class="form-label">Inicio</label>
+            <input class="form-control" value="@Model.Start.ToString("yyyy-MM-dd HH:mm")" readonly />
+        </div>
+        <div class="col-md-6">
+            <label class="form-label">Fin</label>
+            <input class="form-control" value="@Model.End.ToString("yyyy-MM-dd HH:mm")" readonly />
+        </div>
+    </div>
+
+    <hr />
+
+    <div class="row g-3">
+        <div class="col-md-4">
+            <label asp-for="DNI" class="form-label"></label>
+            <input asp-for="DNI" class="form-control" />
+            <span asp-validation-for="DNI" class="text-danger"></span>
+        </div>
+
+        <div class="col-md-8">
+            <label asp-for="NombreApellidos" class="form-label"></label>
+            <input asp-for="NombreApellidos" class="form-control" />
+            <span asp-validation-for="NombreApellidos" class="text-danger"></span>
+        </div>
+
+        <div class="col-md-6">
+            <label asp-for="Telefono" class="form-label"></label>
+            <input asp-for="Telefono" class="form-control" />
+            <span asp-validation-for="Telefono" class="text-danger"></span>
+        </div>
+
+        <div class="col-md-6">
+            <label asp-for="Email" class="form-label"></label>
+            <input asp-for="Email" class="form-control" />
+            <span asp-validation-for="Email" class="text-danger"></span>
+        </div>
+
+        <div class="col-md-4">
+            <label asp-for="NumeroAsistentes" class="form-label"></label>
+            <input asp-for="NumeroAsistentes" class="form-control" />
+            <span asp-validation-for="NumeroAsistentes" class="text-danger"></span>
+        </div>
+
+        <div class="col-md-8">
+            <label asp-for="NombreServicio" class="form-label"></label>
+            <input asp-for="NombreServicio" class="form-control" />
+            <span asp-validation-for="NombreServicio" class="text-danger"></span>
+        </div>
+
+        <div class="col-12">
+            <label asp-for="DescripcionActividad" class="form-label"></label>
+            <textarea asp-for="DescripcionActividad" rows="3" class="form-control"></textarea>
+            <span asp-validation-for="DescripcionActividad" class="text-danger"></span>
+        </div>
+
+        <div class="col-md-6">
+            <label asp-for="Ambito" class="form-label"></label>
+            <select asp-for="Ambito" class="form-select"
+                    asp-items="Html.GetEnumSelectList<AmbitoActividad>()">
+                <option value="">-- Selecciona --</option>
+            </select>
+            <span asp-validation-for="Ambito" class="text-danger"></span>
+        </div>
+
+        <div class="col-md-6">
+            <label asp-for="Observaciones" class="form-label"></label>
+            <input asp-for="Observaciones" class="form-control" />
+            <span asp-validation-for="Observaciones" class="text-danger"></span>
+        </div>
+
+        <div class="col-12">
+            <label class="form-label">@Html.DisplayNameFor(m => m.EquiposUtilizar)</label>
+            <div class="row">
+                @foreach (var op in equiposOps)
+                {
+                    var id = "eq_" + op.Replace(" ", "_");
+                    <div class="col-md-3">
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox"
+                                   name="EquiposUtilizar" id="@id" value="@op"
+                                   @(Model?.EquiposUtilizar != null && Model.EquiposUtilizar.Contains(op) ? "checked" : "") />
+                            <label class="form-check-label" for="@id">@op</label>
+                        </div>
+                    </div>
+                }
+            </div>
+        </div>
+
+        <div class="col-12 mt-3">
+            <button type="submit" class="btn btn-primary">Guardar datos</button>
+            <a asp-action="MisReservas" class="btn btn-secondary">Cancelar</a>
+        </div>
+    </div>
+</form>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

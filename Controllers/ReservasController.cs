@@ -1,11 +1,12 @@
 ﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using Reservas.Context;
 using Reservas.Models;
 using Reservas.Models.ViewModels;
 using Reservas.Services;
 using System.Security.Claims;
-using Microsoft.AspNetCore.Mvc.Rendering;
+using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace Reservas.Controllers
 {
@@ -88,7 +89,7 @@ namespace Reservas.Controllers
             }
 
             // ⏱️ Diferencia mínima de 30 minutos
-            if (vm.FechaFin <= vm.FechaInicio.AddMinutes(30))
+            if (vm.FechaFin < vm.FechaInicio.AddMinutes(30))
             {
                 ModelState.AddModelError(nameof(vm.FechaFin),
                     "La fecha fin debe ser al menos 30 minutos posterior a la fecha de inicio.");
@@ -114,10 +115,64 @@ namespace Reservas.Controllers
             _context.Bookings.Add(reserva);
             await _context.SaveChangesAsync();
 
-            TempData["Mensaje"] = "Reserva creada correctamente.";
+            // → IR A LA SEGUNDA PANTALLA
+            return RedirectToAction(nameof(Datos), new { id = reserva.Id });
+        }
+
+        // GET: /Reservas/Datos/5   (segunda pantalla)
+        [HttpGet]
+        public async Task<IActionResult> Datos(int id)
+        {
+            var booking = await _context.Bookings
+                .Include(b => b.Resource).ThenInclude(r => r.Center)
+                .Include(b => b.Resource).ThenInclude(r => r.ResourceType)
+                .FirstOrDefaultAsync(b => b.Id == id);
+
+            if (booking == null) return NotFound();
+
+            var vm = new BookingFormViewModel
+            {
+                BookingId = booking.Id,         // ← asegúrate de tenerlo en el VM
+                ResourceId = booking.ResourceId,
+                Start = booking.FechaInicio,
+                End = booking.FechaFin
+            };
+
+            return View("Datos", vm);            // Views/Reservas/Datos.cshtml
+        }
+
+        // POST: /Reservas/Datos   (guardar los datos obligatorios)
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Datos(BookingFormViewModel vm)
+        {
+            if (!ModelState.IsValid) return View("Datos", vm);
+
+            var booking = await _context.Bookings.FirstOrDefaultAsync(b => b.Id == vm.BookingId);
+            if (booking == null) return NotFound();
+
+            // mapear del VM al modelo
+            booking.DNI = vm.DNI;
+            booking.NombreApellidos = vm.NombreApellidos;
+            booking.Telefono = vm.Telefono;
+            booking.Email = vm.Email;
+            booking.NumeroAsistentes = vm.NumeroAsistentes;
+            booking.NombreServicio = vm.NombreServicio;
+            booking.DescripcionActividad = vm.DescripcionActividad;
+            booking.Ambito = vm.Ambito;
+            booking.Observaciones = vm.Observaciones;
+            booking.EquiposUtilizar = vm.EquiposUtilizar != null ? string.Join(",", vm.EquiposUtilizar) : null;
+
+            // ahora sí queda como "Pendiente" para que lo vean los validadores
+            booking.Estado = "Pendiente";
+
+            await _context.SaveChangesAsync();
+
+            TempData["Mensaje"] = "Datos añadidos. La reserva queda pendiente de validación.";
             TempData["TipoMensaje"] = "success";
             return RedirectToAction(nameof(MisReservas));
         }
+
 
 
         // ===================== MIS RESERVAS (con orden) =====================

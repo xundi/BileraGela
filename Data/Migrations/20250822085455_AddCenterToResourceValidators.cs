@@ -8,7 +8,7 @@ namespace Reservas.Data.Migrations
     {
         protected override void Up(MigrationBuilder migrationBuilder)
         {
-            // 1) Hacer ResourceId nullable (para permitir validar por centro)
+            // 0) ResourceId -> NULLABLE
             migrationBuilder.AlterColumn<int>(
                 name: "ResourceId",
                 table: "ResourceValidators",
@@ -17,84 +17,184 @@ namespace Reservas.Data.Migrations
                 oldClrType: typeof(int),
                 oldType: "int");
 
+            // 1) CenterId (solo si no existe)
+            migrationBuilder.Sql(@"
+                SET @hasCenter := (
+                  SELECT COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS
+                  WHERE TABLE_SCHEMA = DATABASE()
+                    AND TABLE_NAME='ResourceValidators'
+                    AND COLUMN_NAME='CenterId'
+                );
+                SET @sql := IF(@hasCenter = 0,
+                  'ALTER TABLE `ResourceValidators` ADD COLUMN `CenterId` int NULL;',
+                  'SELECT 1;');
+                PREPARE s1 FROM @sql; EXECUTE s1; DEALLOCATE PREPARE s1;
+            ");
 
-            // 2) NUEVA columna CenterId (nullable)
-           // migrationBuilder.AddColumn<int>(
-             //   name: "CenterId",
-               // table: "ResourceValidators",
-                //type: "int",
-                //nullable: true);
+            // 2) Índice por CenterId (solo si no existe)
+            migrationBuilder.Sql(@"
+                SET @hasIdx := (
+                  SELECT COUNT(*) FROM INFORMATION_SCHEMA.STATISTICS
+                  WHERE TABLE_SCHEMA = DATABASE()
+                    AND TABLE_NAME='ResourceValidators'
+                    AND INDEX_NAME='IX_ResourceValidators_CenterId'
+                );
+                SET @sql := IF(@hasIdx = 0,
+                  'CREATE INDEX `IX_ResourceValidators_CenterId` ON `ResourceValidators` (`CenterId`);',
+                  'SELECT 1;');
+                PREPARE s2 FROM @sql; EXECUTE s2; DEALLOCATE PREPARE s2;
+            ");
 
-            // 3) Índice para CenterId
-            migrationBuilder.CreateIndex(
-                name: "IX_ResourceValidators_CenterId",
-                table: "ResourceValidators",
-                column: "CenterId");
+            // 3) Índice único (UserId,CenterId,ResourceId) (solo si no existe)
+            migrationBuilder.Sql(@"
+                SET @hasIdx2 := (
+                  SELECT COUNT(*) FROM INFORMATION_SCHEMA.STATISTICS
+                  WHERE TABLE_SCHEMA = DATABASE()
+                    AND TABLE_NAME='ResourceValidators'
+                    AND INDEX_NAME='IX_ResourceValidators_UserId_CenterId_ResourceId'
+                );
+                SET @sql := IF(@hasIdx2 = 0,
+                  'CREATE UNIQUE INDEX `IX_ResourceValidators_UserId_CenterId_ResourceId` ON `ResourceValidators` (`UserId`,`CenterId`,`ResourceId`);',
+                  'SELECT 1;');
+                PREPARE s3 FROM @sql; EXECUTE s3; DEALLOCATE PREPARE s3;
+            ");
 
-            // 4) Índice compuesto (evita duplicados lógicos)
-            migrationBuilder.CreateIndex(
-                name: "IX_ResourceValidators_UserId_CenterId_ResourceId",
-                table: "ResourceValidators",
-                columns: new[] { "UserId", "CenterId", "ResourceId" },
-                unique: true);
+            // 4) CHECK (MySQL 8+) (solo si no existe)
+            migrationBuilder.Sql(@"
+                SET @hasChk := (
+                  SELECT COUNT(*) FROM INFORMATION_SCHEMA.TABLE_CONSTRAINTS
+                  WHERE TABLE_SCHEMA = DATABASE()
+                    AND TABLE_NAME='ResourceValidators'
+                    AND CONSTRAINT_TYPE='CHECK'
+                    AND CONSTRAINT_NAME='CK_ResourceValidator_Target'
+                );
+                SET @sql := IF(@hasChk = 0,
+                  'ALTER TABLE `ResourceValidators` ADD CONSTRAINT `CK_ResourceValidator_Target` CHECK ((CenterId IS NOT NULL) OR (ResourceId IS NOT NULL));',
+                  'SELECT 1;');
+                PREPARE s4 FROM @sql; EXECUTE s4; DEALLOCATE PREPARE s4;
+            ");
 
-            // 5) Check: al menos CenterId o ResourceId debe estar informado
-            migrationBuilder.AddCheckConstraint(
-                name: "CK_ResourceValidator_Target",
-                table: "ResourceValidators",
-                sql: "(CenterId IS NOT NULL) OR (ResourceId IS NOT NULL)");
+            // 5) FK a Centers (solo si no existe)
+            migrationBuilder.Sql(@"
+                SET @fkName := 'FK_ResourceValidators_Centers_CenterId';
+                SET @hasFk := (
+                  SELECT COUNT(*) FROM INFORMATION_SCHEMA.KEY_COLUMN_USAGE
+                  WHERE TABLE_SCHEMA = DATABASE()
+                    AND TABLE_NAME='ResourceValidators'
+                    AND CONSTRAINT_NAME=@fkName
+                );
+                SET @sql := IF(@hasFk = 0,
+                  'ALTER TABLE `ResourceValidators`
+                     ADD CONSTRAINT `FK_ResourceValidators_Centers_CenterId`
+                     FOREIGN KEY (`CenterId`) REFERENCES `Centers`(`Id`)
+                     ON DELETE RESTRICT;',
+                  'SELECT 1;');
+                PREPARE s5 FROM @sql; EXECUTE s5; DEALLOCATE PREPARE s5;
+            ");
 
-            // 6) FK a Centers (RESTRICT)
-            migrationBuilder.AddForeignKey(
-                name: "FK_ResourceValidators_Centers_CenterId",
-                table: "ResourceValidators",
-                column: "CenterId",
-                principalTable: "Centers",
-                principalColumn: "Id",
-                onDelete: ReferentialAction.Restrict);
-
-
-            // Volvemos a crear (si fuese necesario) la FK a Resources con RESTRICT.
-            // Si tu FK actual ya existe con Cascade, puedes soltarla y volverla a crear:
-            //migrationBuilder.DropForeignKey(
-              //  name: "FK_ResourceValidators_Resources_ResourceId",
-                //table: "ResourceValidators");
-
-            migrationBuilder.AddForeignKey(
-                name: "FK_ResourceValidators_Resources_ResourceId",
-                table: "ResourceValidators",
-                column: "ResourceId",
-                principalTable: "Resources",
-                principalColumn: "Id",
-                onDelete: ReferentialAction.Restrict);
-
-            // ⚠️ Observa que NO tocamos índices/clave foránea de UserId
-            //     (no DropIndex "IX_ResourceValidators_UserId", no UserId1)
+            // 6) FK a Resources (solo si no existe)  ← evita el "Duplicate foreign key"
+            migrationBuilder.Sql(@"
+                SET @fkName := 'FK_ResourceValidators_Resources_ResourceId';
+                SET @hasFk := (
+                  SELECT COUNT(*) FROM INFORMATION_SCHEMA.KEY_COLUMN_USAGE
+                  WHERE TABLE_SCHEMA = DATABASE()
+                    AND TABLE_NAME='ResourceValidators'
+                    AND CONSTRAINT_NAME=@fkName
+                );
+                SET @sql := IF(@hasFk = 0,
+                  'ALTER TABLE `ResourceValidators`
+                     ADD CONSTRAINT `FK_ResourceValidators_Resources_ResourceId`
+                     FOREIGN KEY (`ResourceId`) REFERENCES `Resources`(`Id`)
+                     ON DELETE RESTRICT;',
+                  'SELECT 1;');
+                PREPARE s6 FROM @sql; EXECUTE s6; DEALLOCATE PREPARE s6;
+            ");
         }
 
         protected override void Down(MigrationBuilder migrationBuilder)
         {
-            // Revertir cambios
-            migrationBuilder.DropForeignKey(
-                name: "FK_ResourceValidators_Centers_CenterId",
-                table: "ResourceValidators");
+            // FKs (solo si existen)
+            migrationBuilder.Sql(@"
+                SET @fkName := 'FK_ResourceValidators_Resources_ResourceId';
+                SET @hasFk := (
+                  SELECT COUNT(*) FROM INFORMATION_SCHEMA.KEY_COLUMN_USAGE
+                  WHERE TABLE_SCHEMA = DATABASE()
+                    AND TABLE_NAME='ResourceValidators'
+                    AND CONSTRAINT_NAME=@fkName
+                );
+                SET @sql := IF(@hasFk = 1,
+                  'ALTER TABLE `ResourceValidators` DROP FOREIGN KEY `FK_ResourceValidators_Resources_ResourceId`;',
+                  'SELECT 1;');
+                PREPARE d1 FROM @sql; EXECUTE d1; DEALLOCATE PREPARE d1;
 
-            migrationBuilder.DropCheckConstraint(
-                name: "CK_ResourceValidator_Target",
-                table: "ResourceValidators");
+                SET @fkName := 'FK_ResourceValidators_Centers_CenterId';
+                SET @hasFk := (
+                  SELECT COUNT(*) FROM INFORMATION_SCHEMA.KEY_COLUMN_USAGE
+                  WHERE TABLE_SCHEMA = DATABASE()
+                    AND TABLE_NAME='ResourceValidators'
+                    AND CONSTRAINT_NAME=@fkName
+                );
+                SET @sql := IF(@hasFk = 1,
+                  'ALTER TABLE `ResourceValidators` DROP FOREIGN KEY `FK_ResourceValidators_Centers_CenterId`;',
+                  'SELECT 1;');
+                PREPARE d2 FROM @sql; EXECUTE d2; DEALLOCATE PREPARE d2;
+            ");
 
-            migrationBuilder.DropIndex(
-                name: "IX_ResourceValidators_UserId_CenterId_ResourceId",
-                table: "ResourceValidators");
+            // CHECK (solo si existe)
+            migrationBuilder.Sql(@"
+                SET @hasChk := (
+                  SELECT COUNT(*) FROM INFORMATION_SCHEMA.TABLE_CONSTRAINTS
+                  WHERE TABLE_SCHEMA = DATABASE()
+                    AND TABLE_NAME='ResourceValidators'
+                    AND CONSTRAINT_TYPE='CHECK'
+                    AND CONSTRAINT_NAME='CK_ResourceValidator_Target'
+                );
+                SET @sql := IF(@hasChk = 1,
+                  'ALTER TABLE `ResourceValidators` DROP CONSTRAINT `CK_ResourceValidator_Target`;',
+                  'SELECT 1;');
+                PREPARE d3 FROM @sql; EXECUTE d3; DEALLOCATE PREPARE d3;
+            ");
 
-            migrationBuilder.DropIndex(
-                name: "IX_ResourceValidators_CenterId",
-                table: "ResourceValidators");
+            // Índices (solo si existen)
+            migrationBuilder.Sql(@"
+                SET @hasIdx := (
+                  SELECT COUNT(*) FROM INFORMATION_SCHEMA.STATISTICS
+                  WHERE TABLE_SCHEMA = DATABASE()
+                    AND TABLE_NAME='ResourceValidators'
+                    AND INDEX_NAME='IX_ResourceValidators_CenterId'
+                );
+                SET @sql := IF(@hasIdx = 1,
+                  'DROP INDEX `IX_ResourceValidators_CenterId` ON `ResourceValidators`;',
+                  'SELECT 1;');
+                PREPARE d4 FROM @sql; EXECUTE d4; DEALLOCATE PREPARE d4;
 
-            migrationBuilder.DropColumn(
-                name: "CenterId",
-                table: "ResourceValidators");
+                SET @hasIdx2 := (
+                  SELECT COUNT(*) FROM INFORMATION_SCHEMA.STATISTICS
+                  WHERE TABLE_SCHEMA = DATABASE()
+                    AND TABLE_NAME='ResourceValidators'
+                    AND INDEX_NAME='IX_ResourceValidators_UserId_CenterId_ResourceId'
+                );
+                SET @sql := IF(@hasIdx2 = 1,
+                  'DROP INDEX `IX_ResourceValidators_UserId_CenterId_ResourceId` ON `ResourceValidators`;',
+                  'SELECT 1;');
+                PREPARE d5 FROM @sql; EXECUTE d5; DEALLOCATE PREPARE d5;
+            ");
 
+            // CenterId (solo si existe)
+            migrationBuilder.Sql(@"
+                SET @hasCenter := (
+                  SELECT COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS
+                  WHERE TABLE_SCHEMA = DATABASE()
+                    AND TABLE_NAME='ResourceValidators'
+                    AND COLUMN_NAME='CenterId'
+                );
+                SET @sql := IF(@hasCenter = 1,
+                  'ALTER TABLE `ResourceValidators` DROP COLUMN `CenterId`;',
+                  'SELECT 1;');
+                PREPARE d6 FROM @sql; EXECUTE d6; DEALLOCATE PREPARE d6;
+            ");
+
+            // ResourceId -> NOT NULL
             migrationBuilder.AlterColumn<int>(
                 name: "ResourceId",
                 table: "ResourceValidators",
@@ -103,15 +203,6 @@ namespace Reservas.Data.Migrations
                 oldClrType: typeof(int),
                 oldType: "int",
                 oldNullable: true);
-
-            // Re-crear FK original a Resources con CASCADE si así estaba antes
-            migrationBuilder.AddForeignKey(
-                name: "FK_ResourceValidators_Resources_ResourceId",
-                table: "ResourceValidators",
-                column: "ResourceId",
-                principalTable: "Resources",
-                principalColumn: "Id",
-                onDelete: ReferentialAction.Cascade);
         }
     }
 }

@@ -10,34 +10,37 @@ namespace Reservas.Data.Migrations
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
         {
-            migrationBuilder.DropColumn(
-                name: "RechazoMotivo",
-                table: "Bookings");
+            migrationBuilder.Sql(@"
+    SET @hasEmail := (
+      SELECT COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS
+      WHERE TABLE_SCHEMA = DATABASE()
+        AND TABLE_NAME='Users'
+        AND COLUMN_NAME='Email'
+    );
+    SET @sql := IF(@hasEmail = 0,
+      'ALTER TABLE `Users` ADD COLUMN `Email` varchar(255) NULL;',
+      'SELECT 1;');
+    PREPARE u1 FROM @sql; EXECUTE u1; DEALLOCATE PREPARE u1;
+");
 
-            migrationBuilder.AddColumn<string>(
-                name: "Email",
-                table: "Users",
-                type: "varchar(255)",
-                maxLength: 255,
-                nullable: false,
-                defaultValue: "")
-                .Annotation("MySql:CharSet", "utf8mb4");
         }
 
         /// <inheritdoc />
         protected override void Down(MigrationBuilder migrationBuilder)
         {
-            migrationBuilder.DropColumn(
-                name: "Email",
-                table: "Users");
+            migrationBuilder.Sql(@"
+    SET @hasEmail := (
+      SELECT COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS
+      WHERE TABLE_SCHEMA = DATABASE()
+        AND TABLE_NAME='Users'
+        AND COLUMN_NAME='Email'
+    );
+    SET @sql := IF(@hasEmail = 1,
+      'ALTER TABLE `Users` DROP COLUMN `Email`;',
+      'SELECT 1;');
+    PREPARE d1 FROM @sql; EXECUTE d1; DEALLOCATE PREPARE d1;
+");
 
-            migrationBuilder.AddColumn<string>(
-                name: "RechazoMotivo",
-                table: "Bookings",
-                type: "varchar(1000)",
-                maxLength: 1000,
-                nullable: true)
-                .Annotation("MySql:CharSet", "utf8mb4");
         }
     }
 }

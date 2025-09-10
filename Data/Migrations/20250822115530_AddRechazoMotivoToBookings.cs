@@ -10,21 +10,35 @@ namespace Reservas.Data.Migrations
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
         {
-            migrationBuilder.AddColumn<string>(
-                name: "RechazoMotivo",
-                table: "Bookings",
-                type: "varchar(1000)",
-                maxLength: 1000,
-                nullable: true)
-                .Annotation("MySql:CharSet", "utf8mb4");
+            migrationBuilder.Sql(@"
+    SET @hasCol := (
+      SELECT COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS
+      WHERE TABLE_SCHEMA = DATABASE()
+        AND TABLE_NAME='Bookings'
+        AND COLUMN_NAME='RechazoMotivo'
+    );
+    SET @sql := IF(@hasCol = 0,
+      'ALTER TABLE `Bookings` ADD COLUMN `RechazoMotivo` varchar(500) NULL;',
+      'SELECT 1;');
+    PREPARE b1 FROM @sql; EXECUTE b1; DEALLOCATE PREPARE b1;
+");
         }
 
         /// <inheritdoc />
         protected override void Down(MigrationBuilder migrationBuilder)
         {
-            migrationBuilder.DropColumn(
-                name: "RechazoMotivo",
-                table: "Bookings");
+            migrationBuilder.Sql(@"
+    SET @hasCol := (
+      SELECT COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS
+      WHERE TABLE_SCHEMA = DATABASE()
+        AND TABLE_NAME='Bookings'
+        AND COLUMN_NAME='RechazoMotivo'
+    );
+    SET @sql := IF(@hasCol = 1,
+      'ALTER TABLE `Bookings` DROP COLUMN `RechazoMotivo`;',
+      'SELECT 1;');
+    PREPARE b2 FROM @sql; EXECUTE b2; DEALLOCATE PREPARE b2;
+");
         }
     }
 }
