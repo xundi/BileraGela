@@ -44,7 +44,7 @@ namespace Reservas.Models.ViewModels
 
         [Required(ErrorMessage = "Describe la actividad")]
         [StringLength(1000)]
-        [Display(Name = "Descripción de la actividad a realizar en la sala")]
+        [Display(Name = "Descripción de la actividad a realizar ")]
         public string DescripcionActividad { get; set; }
 
         [Required(ErrorMessage = "Selecciona el ámbito")]
