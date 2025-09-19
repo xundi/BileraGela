@@ -17,7 +17,11 @@ namespace Reservas.Controllers
         // GET: UserType
         public async Task<IActionResult> Index()
         {
-            return View(await _context.UserTypes.ToListAsync());
+            var lista = await _context.UserTypes
+                .OrderBy(t => t.Name)
+                .ToListAsync();
+            return View(lista);
+
         }
 
 
@@ -46,10 +50,16 @@ namespace Reservas.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Create([Bind("Id,Name")] UserType userType)
         {
-            if (await _context.UserTypes.AnyAsync(u => u.Name == userType.Name))
+            userType.Name = (userType.Name ?? string.Empty).Trim();
+
+            if (string.IsNullOrWhiteSpace(userType.Name))
+                ModelState.AddModelError(nameof(UserType.Name), "El nombre es obligatorio.");
+
+            // Duplicados case/space-insensitive
+            if (await _context.UserTypes
+                .AnyAsync(u => u.Name.ToLower() == userType.Name.ToLower()))
             {
-                ModelState.AddModelError("", "Ya existe un tipo de usuario con ese nombre.");
-                return View(userType);
+                ModelState.AddModelError(nameof(UserType.Name), "Ya existe un tipo de usuario con ese nombre.");
             }
 
             if (!ModelState.IsValid)
@@ -60,6 +70,7 @@ namespace Reservas.Controllers
             TempData["Mensaje"] = "Tipo de usuario creado correctamente.";
             return RedirectToAction(nameof(Index));
         }
+
 
         // GET: UserType/Edit/5
         public async Task<IActionResult> Edit(int? id)
@@ -82,10 +93,16 @@ namespace Reservas.Controllers
             if (id != userType.Id)
                 return NotFound();
 
-            if (await _context.UserTypes.AnyAsync(u => u.Name == userType.Name && u.Id != id))
+            userType.Name = (userType.Name ?? string.Empty).Trim();
+
+            if (string.IsNullOrWhiteSpace(userType.Name))
+                ModelState.AddModelError(nameof(UserType.Name), "El nombre es obligatorio.");
+
+            // Duplicado en otro registro
+            if (await _context.UserTypes
+                .AnyAsync(u => u.Id != id && u.Name.ToLower() == userType.Name.ToLower()))
             {
-                ModelState.AddModelError("", "Ya existe otro tipo de usuario con ese nombre.");
-                return View(userType);
+                ModelState.AddModelError(nameof(UserType.Name), "Ya existe otro tipo de usuario con ese nombre.");
             }
 
             if (!ModelState.IsValid)
@@ -99,14 +116,15 @@ namespace Reservas.Controllers
             }
             catch (DbUpdateConcurrencyException)
             {
-                if (!UserTypeExists(userType.Id))
-                    return NotFound();
-                else
-                    throw;
+                var exists = await _context.UserTypes.AnyAsync(e => e.Id == userType.Id);
+                if (!exists) return NotFound();
+                throw;
             }
+
 
             return RedirectToAction(nameof(Index));
         }
+
 
         // GET: UserType/Delete/5
         public async Task<IActionResult> Delete(int? id)
@@ -127,19 +145,26 @@ namespace Reservas.Controllers
         public async Task<IActionResult> DeleteConfirmed(int id)
         {
             var userType = await _context.UserTypes.FindAsync(id);
-            if (userType != null)
+            if (userType == null)
+                return RedirectToAction(nameof(Index));
+
+            try
             {
                 _context.UserTypes.Remove(userType);
                 await _context.SaveChangesAsync();
                 TempData["Mensaje"] = "Tipo de usuario eliminado correctamente.";
             }
+            catch (DbUpdateException)
+            {
+                // Suele pasar por FK: hay usuarios con este UserTypeId
+                TempData["Mensaje"] = "No se puede eliminar: hay usuarios asociados a este tipo.";
+            }
 
             return RedirectToAction(nameof(Index));
         }
 
-        private bool UserTypeExists(int id)
-        {
-            return _context.UserTypes.Any(e => e.Id == id);
-        }
+
     }
-}
+   
+
+    }

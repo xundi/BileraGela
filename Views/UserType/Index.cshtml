@@ -1,26 +1,30 @@
-﻿@model IEnumerable<Reservas.Models.User>
+﻿@model IEnumerable<Reservas.Models.UserType>
 
 @{
-    ViewData["Title"] = "Usuarios";
+    ViewData["Title"] = "Tipos de Usuario";
 }
 
-<h2 class="mb-4">Usuarios</h2>
+<h2 class="mb-4">Tipos de Usuario</h2>
 
-<a class="btn btn-success mb-3" asp-action="Create">+ Crear nuevo usuario</a>
+@if (TempData["Mensaje"] != null)
+{
+    <div class="alert alert-success">@TempData["Mensaje"]</div>
+}
+
+<a class="btn btn-success mb-3" asp-action="Create">+ Crear tipo</a>
 
 <table class="table table-bordered table-striped">
     <thead>
         <tr>
-            <th>DNI</th>
-            <th>Tipo de usuario</th>
-            <th>Acciones</th>
+            <th>Nombre</th>
+            <th style="width:220px">Acciones</th>
         </tr>
     </thead>
     <tbody>
         @if (!Model.Any())
         {
             <tr>
-                <td colspan="3" class="text-center">No hay usuarios registrados.</td>
+                <td colspan="2" class="text-center">No hay tipos de usuario.</td>
             </tr>
         }
         else
@@ -28,12 +32,17 @@
             @foreach (var item in Model)
             {
                 <tr>
-                    <td>@item.Dni</td>
-                    <td>@item.UserType?.Name</td>
+                    <td>@item.Name</td> @* usa NameSpanish si tu entidad lo tiene así *@
                     <td>
-                        <a class="btn btn-sm btn-primary" asp-action="Edit" asp-route-id="@item.Id">Editar</a>
+                        <a class="btn btn-sm btn-warning" asp-action="Edit" asp-route-id="@item.Id">Editar</a>
                         <a class="btn btn-sm btn-info" asp-action="Details" asp-route-id="@item.Id">Detalles</a>
-                        <a class="btn btn-sm btn-danger" asp-action="Delete" asp-route-id="@item.Id">Eliminar</a>
+                        <form asp-action="Delete" asp-route-id="@item.Id" method="post" class="d-inline">
+                            @Html.AntiForgeryToken()
+                            <button type="submit" class="btn btn-sm btn-danger"
+                                    onclick="return confirm('¿Eliminar este tipo?');">
+                                Eliminar
+                            </button>
+                        </form>
                     </td>
                 </tr>
             }
