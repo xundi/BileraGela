@@ -1,51 +1,64 @@
 ﻿@model IEnumerable<Reservas.Models.UserType>
-
 @{
     ViewData["Title"] = "Tipos de Usuario";
 }
 
-<h2 class="mb-4">Tipos de Usuario</h2>
+<h2 class="mb-4">@ViewData["Title"]</h2>
 
-@if (TempData["Mensaje"] != null)
-{
-    <div class="alert alert-success">@TempData["Mensaje"]</div>
-}
+<a asp-action="Create" class="btn btn-primary mb-3">+ Crear tipo</a>
 
-<a class="btn btn-success mb-3" asp-action="Create">+ Crear tipo</a>
-
-<table class="table table-bordered table-striped">
+<table id="tabla-usertypes" class="table table-striped table-bordered w-100">
     <thead>
         <tr>
             <th>Nombre</th>
-            <th style="width:220px">Acciones</th>
+            <th class="no-sort" style="width:180px;">Acciones</th>
         </tr>
     </thead>
     <tbody>
-        @if (!Model.Any())
+        @foreach (var t in Model)
         {
             <tr>
-                <td colspan="2" class="text-center">No hay tipos de usuario.</td>
-            </tr>
-        }
-        else
-        {
-            @foreach (var item in Model)
-            {
-                <tr>
-                    <td>@item.Name</td> @* usa NameSpanish si tu entidad lo tiene así *@
-                    <td>
-                        <a class="btn btn-sm btn-warning" asp-action="Edit" asp-route-id="@item.Id">Editar</a>
-                        <a class="btn btn-sm btn-info" asp-action="Details" asp-route-id="@item.Id">Detalles</a>
-                        <form asp-action="Delete" asp-route-id="@item.Id" method="post" class="d-inline">
+                <td>@t.Name</td>
+                <td>
+                    <div class="btn-group btn-group-sm" role="group">
+                        <a asp-action="Edit" asp-route-id="@t.Id" class="btn btn-warning">Editar</a>
+                        <a asp-action="Details" asp-route-id="@t.Id" class="btn btn-info">Detalles</a>
+                        <form asp-action="Delete" asp-route-id="@t.Id" method="post" class="d-inline m-0">
                             @Html.AntiForgeryToken()
-                            <button type="submit" class="btn btn-sm btn-danger"
-                                    onclick="return confirm('¿Eliminar este tipo?');">
+                            <button type="submit" class="btn btn-danger"
+                                    onclick="return confirm('¿Eliminar este tipo de usuario?');">
                                 Eliminar
                             </button>
                         </form>
-                    </td>
-                </tr>
-            }
+                    </div>
+                </td>
+            </tr>
         }
     </tbody>
 </table>
+
+@section Scripts {
+    <script>
+        $(function () {
+          const sel = '#tabla-usertypes';
+
+          // evita doble init si vuelves a la vista
+          if ($.fn.dataTable.isDataTable(sel)) {
+            $(sel).DataTable().destroy();
+          }
+
+          $(sel).DataTable({
+            order: [[0, 'asc']],        // Nombre ↑ activo por defecto
+            orderMulti: false,          // solo una columna activa
+            paging: false,              // igual que en tus otras listas (ajusta si quieres)
+            searching: false,
+            info: false,
+            autoWidth: false,
+            columnDefs: [
+              { targets: 'no-sort', orderable: false } // Acciones sin orden
+            ],
+            language: { url: '/lib/datatables/i18n/es-ES.json' }
+          });
+        });
+    </script>
+}

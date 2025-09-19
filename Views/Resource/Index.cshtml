@@ -13,32 +13,31 @@
     <a asp-action="Create" class="btn btn-primary mb-3">+ Nuevo Recurso</a>
 }
 
-<table class="table table-bordered table-striped" id="tablaRecursos">
+<table id="tabla-recursos" class="table table-striped table-bordered w-100">
     <thead>
         <tr>
             <th>Centro</th>
             <th>Tipo de Recurso</th>
             <th>Nombre (EU)</th>
             <th>Nombre (ES)</th>
-            <th>Acciones</th>
+            <th class="no-sort" style="width:180px;">Acciones</th>
         </tr>
     </thead>
     <tbody>
-        @foreach (var item in Model)
+        @foreach (var r in Model)
         {
             <tr>
-                <td>@item.Center.NameSpanish</td>
-                <td>@item.ResourceType?.NameSpanish</td>
-                <td>@item.NameEuskera</td>
-                <td>@item.NameSpanish</td>
+                <td>@r.Center?.NameSpanish</td>
+                <td>@r.ResourceType?.NameSpanish</td>
+                <td>@r.NameEuskera</td>
+                <td>@r.NameSpanish</td>
                 <td>
-                    @if (tipoUsuario >= 3)
-                    {
-                        <a asp-action="Edit" asp-route-id="@item.Id" class="btn btn-warning btn-sm me-1">Editar</a>
-                        <a asp-action="Delete" asp-route-id="@item.Id" class="btn btn-danger btn-sm me-1"
-                           onclick="return confirm('¿Estás seguro de eliminar este recurso?');">Eliminar</a>
-                    }
-                    <a asp-controller="Reservas" asp-action="Create" asp-route-recursoId="@item.Id" class="btn btn-success btn-sm">Reservar</a>
+                    <div class="btn-group btn-group-sm" role="group">
+                        <a asp-action="Edit" asp-route-id="@r.Id" class="btn btn-warning">Editar</a>
+                        <a asp-action="Delete" asp-route-id="@r.Id" class="btn btn-danger">Eliminar</a>
+                        <a asp-controller="Reservas" asp-action="Create" asp-route-recursoId="@r.Id"
+                           class="btn btn-success">Reservar</a>
+                    </div>
                 </td>
             </tr>
         }
@@ -53,26 +52,25 @@
 }
 
 @section Scripts {
-    <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
-    <link href="https://cdn.datatables.net/1.13.6/css/jquery.dataTables.min.css" rel="stylesheet" />
     <script>
-        $(document).ready(function () {
-            const tabla = $('#tablaRecursos').DataTable({
-                order: [
-                    [0, 'asc'], // Centro
-                    [1, 'asc'], // Tipo
-                    [2, 'asc'], // Nombre EU
-                    [3, 'asc']  // Nombre ES
-                ],
-                language: {
-                    url: '//cdn.datatables.net/plug-ins/1.13.6/i18n/es-ES.json'
-                }
-            });
-
-            // Opcional: Filtro externo si lo añades
-            $('#filtroTabla').on('keyup', function () {
-                tabla.search(this.value).draw();
-            });
+        $(function () {
+          $('#tabla-recursos').DataTable({
+            // 👇 Fuerza el orden inicial por la 1ª columna (Centro) ascendente
+            order: [[0, 'asc']],
+            orderMulti: false,          // evita orden múltiple por varias columnas
+            paging: true,               // lo que ya uses aquí…
+            searching: true,
+            info: true,
+            autoWidth: false,
+            columns: [
+              { orderable: true },   // 0 Centro  -> ordenable
+              { orderable: true },   // 1 Tipo    -> ordenable
+              { orderable: true },   // 2 Nombre(EU)
+              { orderable: true },   // 3 Nombre(ES)
+              { orderable: false }   // 4 Acciones -> NO ordenable
+            ],
+            language: { url: '/lib/datatables/i18n/es-ES.json' }
+          });
         });
     </script>
 }
