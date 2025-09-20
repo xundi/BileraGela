@@ -96,6 +96,25 @@ namespace Reservas.Controllers
                 return View(vm);
             }
 
+            // 🔒 Bloqueo de solapes (Pendiente/Confirmada)
+            string[] estadosQueBloquean = { "Pendiente", "Confirmada" };
+
+            bool haySolape = await _context.Bookings
+                .Where(b => b.ResourceId == vm.RecursoId.Value)
+                .Where(b => estadosQueBloquean.Contains(b.Estado))
+                .AnyAsync(b =>
+                    b.FechaInicio < vm.FechaFin &&   // empieza antes de que termine la nueva
+                    vm.FechaInicio < b.FechaFin      // y termina después de que empiece la otra
+                );
+
+            if (haySolape)
+            {
+                ModelState.AddModelError(string.Empty,
+                    "El recurso ya tiene una reserva (pendiente o confirmada) en ese intervalo.");
+                return View(vm);
+            }
+
+
 
             // ← Obtén el usuario por DNI (Name)
             var dni = User.Identity?.Name;
@@ -301,6 +320,38 @@ namespace Reservas.Controllers
                 return RedirectToAction(nameof(MisReservas));
             }
 
+            // 🚫 No permitir reservas en el pasado (opcional, igual que en Create)
+            if (input.FechaInicio < DateTime.Now)
+            {
+                ModelState.AddModelError(nameof(input.FechaInicio),
+                    "La fecha de inicio no puede ser anterior al momento actual.");
+                return View("Edit", input);
+            }
+
+            // ⏱️ Diferencia mínima de 30 minutos (opcional, igual que en Create)
+            if (input.FechaFin < input.FechaInicio.AddMinutes(30))
+            {
+                ModelState.AddModelError(nameof(input.FechaFin),
+                    "La fecha fin debe ser al menos 30 minutos posterior a la fecha de inicio.");
+                return View("Edit", input);
+            }
+
+
+            // 🔒 Comprobación de solapes
+            var estadosQueBloquean = new[] { "Pendiente", "Confirmada" };
+            bool haySolape = await _context.Bookings
+                .Where(b => b.ResourceId == input.ResourceId && b.Id != input.Id)
+                .Where(b => estadosQueBloquean.Contains(b.Estado))
+                .AnyAsync(b => b.FechaInicio < input.FechaFin && input.FechaInicio < b.FechaFin);
+
+            if (haySolape)
+            {
+                ModelState.AddModelError(string.Empty,
+                    "El recurso ya tiene una reserva (pendiente o confirmada) en ese intervalo.");
+                return View("Edit", input);
+            }
+
+            // Asignar y guardar
             reserva.FechaInicio = input.FechaInicio;
             reserva.FechaFin = input.FechaFin;
             reserva.ResourceId = input.ResourceId;
@@ -467,6 +518,22 @@ namespace Reservas.Controllers
                 .FirstOrDefaultAsync(b => b.Id == id);
 
             if (reserva == null) return NotFound();
+
+            // 🔒 No permitir confirmar si solapa con otra ya CONFIRMADA
+            if (accion == "validar")
+            {
+                bool solapaConConfirmada = await _context.Bookings
+                    .Where(b => b.ResourceId == reserva.ResourceId && b.Id != reserva.Id)
+                    .Where(b => b.Estado == "Confirmada")
+                    .AnyAsync(b => b.FechaInicio < reserva.FechaFin && reserva.FechaInicio < b.FechaFin);
+
+                if (solapaConConfirmada)
+                {
+                    TempData["Error"] = "No se puede confirmar: ya existe otra reserva CONFIRMADA que solapa en ese intervalo.";
+                    return RedirectToAction(nameof(Validar));
+                }
+            }
+
 
             if (accion == "validar")
             {

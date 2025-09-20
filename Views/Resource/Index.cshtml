@@ -33,9 +33,17 @@
                 <td>@r.NameSpanish</td>
                 <td>
                     <div class="btn-group btn-group-sm" role="group">
-                        <a asp-action="Edit" asp-route-id="@r.Id" class="btn btn-warning">Editar</a>
-                        <a asp-action="Delete" asp-route-id="@r.Id" class="btn btn-danger">Eliminar</a>
-                        <a asp-controller="Reservas" asp-action="Create" asp-route-recursoId="@r.Id"
+                        @* Solo ADMIN puede ver Editar/Eliminar *@
+                        @if (tipoUsuario == 3)
+                        {
+                            <a asp-action="Edit" asp-route-id="@r.Id" class="btn btn-warning">Editar</a>
+                            <a asp-action="Delete" asp-route-id="@r.Id" class="btn btn-danger">Eliminar</a>
+                        }
+
+                        @* Todos pueden reservar *@
+                        <a asp-controller="Reservas"
+                           asp-action="Create"
+                           asp-route-recursoId="@r.Id"
                            class="btn btn-success">Reservar</a>
                     </div>
                 </td>
